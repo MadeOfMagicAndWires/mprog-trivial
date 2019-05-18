@@ -3,7 +3,6 @@ package online.madeofmagicandwires.trivial;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import online.madeofmagicandwires.trivial.HighscoresFragment;
 
 public class HighscoresActivity extends AppCompatActivity {
 

@@ -5,4 +5,7 @@
     <string name="highscores_button_text">Highscores</string>
     <string name="welcome_text">Welcome to Trivial</string>
     <string name="highscoresfragment_placeholder">Hello Highscores Fragment</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="game_fragment_placeholder_text">Please wait&#8230;</string>
 </resources>
