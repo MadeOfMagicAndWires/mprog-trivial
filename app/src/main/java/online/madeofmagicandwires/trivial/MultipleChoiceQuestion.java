@@ -20,7 +20,22 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
      * @param theWrongAnswers a series of wrong answers to add in the mix
      */
     public MultipleChoiceQuestion(String aQuestion, String theAnswer, String[] theWrongAnswers) {
-        super(TriviaQuestion.MULTIPLE, aQuestion);
+        super(TriviaGame.MULTIPLE, aQuestion, TriviaGame.DIFFICULTY_UNKNOWN);
+        this.rightAnswer = theAnswer;
+        this.wrongAnswers = theWrongAnswers;
+    }
+
+    /**
+     * Standard constructor
+     * @param aQuestion the question to be asked
+     * @param theAnswer the answer to the question
+     * @param theWrongAnswers a series of wrong answers to add in the mix
+     */
+    public MultipleChoiceQuestion(
+                                  String aQuestion, String theAnswer,
+                                  String[] theWrongAnswers,
+                                  @TriviaGame.Difficulty String level) {
+        super(TriviaGame.MULTIPLE, aQuestion, level);
         this.rightAnswer = theAnswer;
         this.wrongAnswers = theWrongAnswers;
     }
@@ -44,7 +59,7 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
      * @return a boolean revealing whether the answer was correct; true if it was, false if it wasn't
      */
     @Override
-    public <T extends Comparable<T>> boolean checkAnswer(T answer) {
+    public <T> boolean checkAnswer(T answer) {
         return answer.equals(rightAnswer);
     }
 }
