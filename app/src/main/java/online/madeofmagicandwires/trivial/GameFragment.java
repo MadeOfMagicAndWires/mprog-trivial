@@ -49,17 +49,22 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
         return root;
     }
 
-
-
     @Override
     public void showNextQuestion() {
-        Log.d("GameFragment", "showNextQuestion was called");
-        if(getView() != null) {
-            try {
-                getView().findViewById(R.id.game_fragment_placeholder).setVisibility(View.GONE);
-            } catch (NullPointerException e) {
-                Log.getStackTraceString(e);
-            }
+        if(isAdded()) {
+            // use runOnUiThread as this might not be called from the main thread.
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        getView().findViewById(R.id.game_fragment_placeholder).setVisibility(View.GONE);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } else {
+            Log.e("showNextQuestion", "Fragment was not added to an Activity");
         }
     }
 }
