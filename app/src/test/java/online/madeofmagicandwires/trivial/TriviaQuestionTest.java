@@ -19,7 +19,11 @@ public class TriviaQuestionTest {
 
     @Before
     public void setUp(){
-        testQuestion = new MultipleChoiceQuestion(QUESTION, ANSWER, WRONG_ANSWERS, TriviaGame.EASY);
+        testQuestion = new MultipleChoiceQuestion(
+                QUESTION,
+                ANSWER,
+                WRONG_ANSWERS,
+                TriviaGame.Difficulty.EASY);
     }
 
     @Test
@@ -30,7 +34,10 @@ public class TriviaQuestionTest {
     @Test
     public void getQuestionType() {
 
-        String[] possibleTypes = {TriviaGame.MULTIPLE, TriviaGame.BOOLEAN, TriviaGame.TYPE_UNKNOWN};
+        String[] possibleTypes = {
+                TriviaQuestion.Type.MULTIPLE,
+                TriviaQuestion.Type.BOOLEAN,
+                TriviaQuestion.Type.UNKNOWN};
 
         assertThat(
                 "Returned question type was not a valid one!",
@@ -39,7 +46,7 @@ public class TriviaQuestionTest {
         assertNotEquals(
                 "question type was set to unknown! Should be Multiple choice",
                 testQuestion.getQuestionType(),
-                TriviaGame.TYPE_UNKNOWN);
+                TriviaQuestion.Type.UNKNOWN);
 
 
     }

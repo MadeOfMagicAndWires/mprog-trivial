@@ -1,13 +1,31 @@
 package online.madeofmagicandwires.trivial;
 
+import android.support.annotation.StringDef;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Abstract Representation of a Trivia question
  */
 abstract public class TriviaQuestion {
 
+    /**
+     * Android-efficient enum replacement representing the type of question asked.
+     * Can be either 'MULTIPLE' or 'BOOLEAN'
+     */
+
+    @Retention(RetentionPolicy.SOURCE)
+    @StringDef({Type.MULTIPLE, Type.BOOLEAN, Type.UNKNOWN})
+    @interface Type {
+        String MULTIPLE = "multiple choice";
+        String BOOLEAN = "true/false";
+        String UNKNOWN = "unknown";
+    }
+
 
     private String question;
-    private @TriviaGame.Type String questionType;
+    private @TriviaQuestion.Type String questionType;
     private @TriviaGame.Difficulty String difficulty;
 
     /**
@@ -15,14 +33,14 @@ abstract public class TriviaQuestion {
      * @param type
      * @param question
      */
-    public TriviaQuestion(@TriviaGame.Type String type, String question) {
+    public TriviaQuestion(@TriviaQuestion.Type String type, String question) {
         this.question = question;
         this.questionType = type;
-        this.difficulty = TriviaGame.TYPE_UNKNOWN;
+        this.difficulty = TriviaQuestion.Type.UNKNOWN;
     }
 
     public TriviaQuestion(
-            @TriviaGame.Type String type,
+            @TriviaQuestion.Type String type,
             String question,
             @TriviaGame.Difficulty String difficulty) {
         this.questionType = type;
@@ -47,8 +65,16 @@ abstract public class TriviaQuestion {
      *
      * @return the type of answer
      */
-    public @TriviaGame.Type String getQuestionType() {
+    public @TriviaQuestion.Type String getQuestionType() {
         return questionType;
+    }
+
+    /**
+     * Gets the difficulty of the question
+     * @return the difficulty of the question rated
+     */
+    public String getDifficulty() {
+        return difficulty;
     }
 
     /**

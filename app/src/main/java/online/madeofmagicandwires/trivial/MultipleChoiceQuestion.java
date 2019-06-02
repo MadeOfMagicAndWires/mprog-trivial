@@ -20,7 +20,7 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
      * @param theWrongAnswers a series of wrong answers to add in the mix
      */
     public MultipleChoiceQuestion(String aQuestion, String theAnswer, String[] theWrongAnswers) {
-        super(TriviaGame.MULTIPLE, aQuestion, TriviaGame.DIFFICULTY_UNKNOWN);
+        super(TriviaQuestion.Type.MULTIPLE, aQuestion, TriviaGame.Difficulty.UNKNOWN);
         this.rightAnswer = theAnswer;
         this.wrongAnswers = theWrongAnswers;
     }
@@ -35,7 +35,7 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
                                   String aQuestion, String theAnswer,
                                   String[] theWrongAnswers,
                                   @TriviaGame.Difficulty String level) {
-        super(TriviaGame.MULTIPLE, aQuestion, level);
+        super(TriviaQuestion.Type.MULTIPLE, aQuestion, level);
         this.rightAnswer = theAnswer;
         this.wrongAnswers = theWrongAnswers;
     }
