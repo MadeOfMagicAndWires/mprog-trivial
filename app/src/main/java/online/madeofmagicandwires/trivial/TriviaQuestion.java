@@ -82,4 +82,10 @@ abstract public class TriviaQuestion {
      * @return a boolean revealing whether the answer was correct; true if it was, false if it wasn't
      */
     abstract public <T> boolean checkAnswer(T answer);
+
+    /**
+     * Shows the correct answer
+     * @return String containing the right answer to the question
+     */
+    abstract public String getRightAnswer();
 }

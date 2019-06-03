@@ -53,6 +53,15 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
     }
 
     /**
+     * Shows the correct answer
+     * @return String containing the right answer to the question
+     */
+    @Override
+    public String getRightAnswer() {
+        return this.rightAnswer;
+    }
+
+    /**
      * Checks if the answer given is the right one
      *
      * @param answer
