@@ -1,8 +1,12 @@
 package online.madeofmagicandwires.trivial;
 
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
+import android.text.TextUtils;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -73,10 +77,28 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * Make a Volley Request using query parameters instead of attaching data
      * @param method the method to be used; must be one of {@link com.android.volley.Request.Method}
      * @param url the endpoint to send the request to
-     * @param queryParams the query parameters to attach to the url
+     * @param queryParams the query parameters to attach to the request url
      */
     public void makeRequest(int method, String url, String queryParams) {
-        makeRequest(method, url + queryParams, (JSONObject) null);
+        makeRequest(method, url + "?" + queryParams, (JSONObject) null);
+    }
+
+    /**
+     * Make a Volley Request using multiple query parameters instead of attaching data
+     * @param method the method to be used; must be one of {@link com.android.volley.Request.Method}
+     * @param url the endpoint to send the request to
+     * @param queryParams an array of query parameters to attach to the request url
+     */
+    @TargetApi(Build.VERSION_CODES.O)
+    public void makeRequest(int method, String url, String[] queryParams) {
+        String joined;
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            joined = String.join("&", queryParams);
+        } else {
+            joined = TextUtils.join("&", queryParams);
+        }
+
+        makeRequest(method, url + "?" + joined, (JSONObject) null);
     }
 
 

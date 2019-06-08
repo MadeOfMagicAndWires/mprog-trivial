@@ -1,5 +1,6 @@
 package online.madeofmagicandwires.trivial;
 
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -7,13 +8,17 @@ import android.os.Bundle;
 import android.util.Log;
 
 
-public class GameActivity extends AppCompatActivity {
-
-    public static String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
+public class GameActivity extends AppCompatActivity implements
+        TriviaRequestHelper.SessionTokenRequestListener {
 
     public interface GameView {
         void showNextQuestion();
     }
+
+    public static String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
+
+
+    private TriviaRequestHelper request;
 
 
     @Override
@@ -27,7 +32,18 @@ public class GameActivity extends AppCompatActivity {
         changes.commit();
         getSupportFragmentManager().executePendingTransactions();
 
-        testShowNextQuestion();
+        initTriviaGame();
+
+
+    }
+
+
+    /**
+     * Initiates the TriviaGame and TriviaRequestHelper
+     */
+    public void initTriviaGame(){
+        request = TriviaRequestHelper.getInstance(getApplicationContext());
+        request.requestSessionToken(this);
 
     }
 
@@ -57,4 +73,28 @@ public class GameActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * called when an error occurs during a request to the OpenTrivia API
+     *
+     * @param lastRequest the endpoint of the request;
+     *                    note that this might not be entirely accurate due to async requests
+     * @param errorMsg    the error message included.
+     */
+    @Override
+    public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+        Log.e("GameActivity", "request to " + lastRequest + " failed!");
+        if(errorMsg != null) {
+            Log.e("GameActivity", errorMsg);
+        }
+    }
+
+    /**
+     * called when a TriviaDB session request has been successfully requeste
+     *
+     * @param token the session token retrieved
+     */
+    @Override
+    public void OnTokenRequestSuccess(String token) {
+        Log.i("TriviaRequestHelper", "Succesfully retrieved session token '" + token + "'");
+    }
 }

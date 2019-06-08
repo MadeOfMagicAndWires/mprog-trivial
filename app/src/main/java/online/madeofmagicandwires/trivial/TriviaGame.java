@@ -164,14 +164,8 @@ public class TriviaGame {
      *
      * @throws IndexOutOfBoundsException if the question index is higher
      * than the total amount of questions to be asked before the game ends
-     *
-     * @throws NoQuestionHandlerProvidedException if {@link TriviaGame#questionsHandler} was not set
      */
-    public TriviaQuestion getCurrentQuestion() throws ArrayIndexOutOfBoundsException,
-            NoQuestionHandlerProvidedException {
-         if(questions == null || questionIndex >= (questions.size()-1) && questionAmount == 0) {
-             updateQuestions(10);
-         }
+    public TriviaQuestion getCurrentQuestion() throws ArrayIndexOutOfBoundsException {
          return questions.get(questionIndex);
     }
 
@@ -221,7 +215,7 @@ public class TriviaGame {
      * @param questionsHandler object implementing the QuestionHandler interface.
      */
     public void setQuestionsHandler(QuestionsHandler questionsHandler) {
-        if(questionsHandler == null || !questionsHandler.equals(this.questionsHandler)) {
+        if(questionsHandler != this.questionsHandler) {
             this.questionsHandler = questionsHandler;
         }
     }
