@@ -97,4 +97,9 @@ public class GameActivity extends AppCompatActivity implements
     public void OnTokenRequestSuccess(String token) {
         Log.i("TriviaRequestHelper", "Succesfully retrieved session token '" + token + "'");
     }
+
+    @Override
+    public void OnTokenResetSuccess(String token) {
+
+    }
 }

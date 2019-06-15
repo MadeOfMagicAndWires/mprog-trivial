@@ -13,37 +13,68 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
     private String rightAnswer;
     private String[] wrongAnswers;
 
+
     /**
-     * Standard constructor
+     * Most verbose constructor, sets all the class' elements to the given parameters
+     *
      * @param aQuestion the question to be asked
      * @param theAnswer the answer to the question
      * @param theWrongAnswers a series of wrong answers to add in the mix
+     * @param difficulty the difficulty level of the question
+     * @param theCategory the category the question belongs to
      */
-    public MultipleChoiceQuestion(String aQuestion, String theAnswer, String[] theWrongAnswers) {
-        super(TriviaQuestion.Type.MULTIPLE, aQuestion, TriviaGame.Difficulty.UNKNOWN);
+    public MultipleChoiceQuestion(
+            String aQuestion,
+            String theAnswer,
+            String[] theWrongAnswers,
+            @TriviaGame.Difficulty String difficulty,
+            String theCategory) {
+        super(aQuestion, difficulty, theCategory);
         this.rightAnswer = theAnswer;
         this.wrongAnswers = theWrongAnswers;
     }
 
+
     /**
-     * Standard constructor
+     * Less verbose constructor, automatically sets the category to "Unknown"
+     *
      * @param aQuestion the question to be asked
      * @param theAnswer the answer to the question
      * @param theWrongAnswers a series of wrong answers to add in the mix
      */
     public MultipleChoiceQuestion(
-                                  String aQuestion, String theAnswer,
-                                  String[] theWrongAnswers,
-                                  @TriviaGame.Difficulty String level) {
-        super(TriviaQuestion.Type.MULTIPLE, aQuestion, level);
+            String aQuestion, String theAnswer,
+            String[] theWrongAnswers,
+            @TriviaGame.Difficulty String level) {
+        super(aQuestion, level);
+        this.rightAnswer = theAnswer;
+        this.wrongAnswers = theWrongAnswers;
+    }
+
+
+    /**
+     * Standard constructor; automatically sets the difficulty and category to Unknown
+     *
+     * @param aQuestion the question to be asked
+     * @param theAnswer the answer to the question
+     * @param theWrongAnswers a series of wrong answers to add in the mix
+     *
+     */
+    public MultipleChoiceQuestion(
+            String aQuestion,
+            String theAnswer,
+            String[] theWrongAnswers) {
+        super(aQuestion, TriviaGame.Difficulty.UNKNOWN);
         this.rightAnswer = theAnswer;
         this.wrongAnswers = theWrongAnswers;
     }
 
     /**
-     * Returns all the choices to choose from, shuffled in a random order.
+     * Returns all the choices to choose from, shuffled in a random order
+     *
      * @return a list of human-readable possible answers to the question
      */
+    @Override
     public List<String> getAnswers() {
         List<String> choices = new ArrayList<>();
         choices.add(rightAnswer);
@@ -54,6 +85,7 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
 
     /**
      * Shows the correct answer
+     *
      * @return String containing the right answer to the question
      */
     @Override
@@ -64,11 +96,11 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
     /**
      * Checks if the answer given is the right one
      *
-     * @param answer
+     * @param  answer the answer given by the user to check against the expected answer
      * @return a boolean revealing whether the answer was correct; true if it was, false if it wasn't
      */
     @Override
-    public <T> boolean checkAnswer(T answer) {
+    public <T extends Comparable> boolean checkAnswer(T answer) {
         return answer.equals(rightAnswer);
     }
 }

@@ -9,6 +9,7 @@ import android.support.test.internal.runner.listener.InstrumentationRunListener;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,20 +21,28 @@ import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-public class TriviaRequestHelperTest implements TriviaRequestHelper.SessionTokenRequestListener {
+public class TriviaRequestHelperTest {
 
     private Context appContext;
     private TriviaRequestHelper helper;
 
     private String seshtoken;
+    private String resetToken;
+    private JSONArray questionArr;
 
 
+    /**
+     * Initialises the application context and TriviaRequestHelper instance
+     */
     @Before
     public void setContext(){
         appContext = InstrumentationRegistry.getTargetContext();
         this.helper = TriviaRequestHelper.getInstance(appContext);
     }
 
+    /**
+     * Tests if {@link TriviaRequestHelper#getInstance(Context)} truly produces a singleton
+     */
     @Test
     public void getInstance() {
         TriviaRequestHelper instance1 = TriviaRequestHelper.getInstance(appContext);
@@ -42,83 +51,118 @@ public class TriviaRequestHelperTest implements TriviaRequestHelper.SessionToken
     }
 
 
-
-    public void makeRequest() {
-    }
-
-    public void makeRequest1() {
-    }
-
-
-    public void makeRequest2() {
-    }
-
-    @Test
-    public void setLastRequest() {
-    }
-
-    @Test
-    public void setListener() {
-        helper.setListener(this);
-        assertEquals(this, helper.getListener());
-
-    }
-
+    /**
+     * Tests {@link TriviaRequestHelper#requestSessionToken(TriviaRequestHelper.SessionTokenRequestListener)}
+     * @throws InterruptedException when this method is interrupted while waiting for a network response
+     */
     @Test
     public void requestSessionToken() throws InterruptedException {
         final CountDownLatch signal = new CountDownLatch(1);
-        Instrumentation instrument = InstrumentationRegistry.getInstrumentation();
-        final TriviaRequestHelper.SessionTokenRequestListener these = this;
-        instrument.runOnMainSync(new Runnable() {
+        final TriviaRequestHelper.SessionTokenRequestListener testListener =
+                new TriviaRequestHelper.SessionTokenRequestListener() {
             @Override
-            public void run() {
-                Log.d("Runnable!", "Test!");
-                System.out.println("println Test!");
-                helper.requestSessionToken(new TriviaRequestHelper.SessionTokenRequestListener() {
-                    @Override
-                    public void OnTokenRequestSuccess(String token) {
-                        seshtoken = token;
-                    }
-
-                    @Override
-                    public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
-                        System.out.println(errorMsg);
-
-                    }
-                });
+            public void OnTokenRequestSuccess(String token) {
+                seshtoken = token;
                 signal.countDown();
             }
-        });
-        signal.await(30, TimeUnit.SECONDS);
-        System.out.println("Session token: "  + seshtoken);
+
+            @Override
+            public void OnTokenResetSuccess(String token) {
+                // not used here
+            }
+
+            @Override
+            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+                Log.e("requestSessionToken", "request error: " +  errorMsg);
+                signal.countDown();
+
+            }
+        };
+
+        helper.requestSessionToken(testListener);
+        // wait till the requestSessionToken request has resolved
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+        assertFalse("Request was timed out!", resolved);
+
+        Log.d("Session token: ", seshtoken);
         assertNotNull("Session token has not been filled in!", seshtoken);
         assertFalse("Session token " + seshtoken + " is empty!", seshtoken.isEmpty());
+        assertEquals("Session token was not saved correctly", seshtoken, helper.getSessionToken());
 
 
-    }
-
-    public void resetSessionToken() {
     }
 
     /**
-     * called when an error occurs during a request to the OpenTrivia API
-     *
-     * @param lastRequest the endpoint of the request;
-     *                    note that this might not be entirely accurate due to async requests
-     * @param errorMsg    the error message included.
+     * Tests {@link TriviaRequestHelper#resetSessionToken(TriviaRequestHelper.SessionTokenRequestListener)}
+     * @throws InterruptedException when this method is interrupted while waiting for a network response
      */
-    @Override
-    public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+    @Test
+    public void resetSessionToken() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(2);
+        final TriviaRequestHelper.SessionTokenRequestListener testListener =
+                new TriviaRequestHelper.SessionTokenRequestListener() {
+            @Override
+            public void OnTokenRequestSuccess(String token) {
+                Log.d("resetSessionToken", "received initial token: " + token);
+                seshtoken = token;
+                signal.countDown();
+            }
+
+            @Override
+            public void OnTokenResetSuccess(String token) {
+                Log.d("resetSessionToken", "reset token: " + token);
+                resetToken = token;
+                signal.countDown();
+            }
+
+            @Override
+            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+                Log.e("resetSessionToken", "request error: " +  errorMsg);
+                signal.countDown(); // release one thread whenever a request has failed
+            }
+        };
+
+        helper.requestSessionToken(testListener);
+        // wait till the requestSessionToken request has resolved
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+        assertFalse("Request was timed out!", resolved);
+        helper.resetSessionToken(testListener);
+        // wait till resetSessionToken request has resolved
+        resolved = signal.await(30, TimeUnit.SECONDS);
+        assertTrue("Request was timed out!", resolved);
+
+        // testing response
+        assertNotNull("Reset token was not set!", resetToken);
+        assertEquals("Reset token is not the same as the original!", seshtoken, resetToken);
     }
 
     /**
-     * called when a TriviaDB session request has been successfully requeste
+     * Tests {@link TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionRequestListener)}
      *
-     * @param token the session token retrieved
      */
-    @Override
-    public void OnTokenRequestSuccess(String token) {
-        System.out.println(token);
-        seshtoken = token;
+    @Test
+    public void requestQuestions() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.QuestionRequestListener testListener = new TriviaRequestHelper.QuestionRequestListener() {
+            @Override
+            public void OnQuestionsRequestSuccess(JSONArray questions) {
+                questionArr = questions;
+                signal.countDown();
+            }
+
+            @Override
+            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+                signal.countDown(); //release thread if error occurred
+            }
+        };
+
+        helper.requestQuestions(10, testListener);
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+        assertTrue("Request did not resolve within 30 seconds!", resolved);
+
+        // test response
+        assertNotNull("Did not retrieve any questions array from questions request!", questionArr);
+        assertNotEquals("Questions Array was empty!", 0, questionArr.length());
     }
+
 }

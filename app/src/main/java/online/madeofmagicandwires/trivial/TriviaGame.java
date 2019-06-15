@@ -22,6 +22,14 @@ public class TriviaGame {
         String UNKNOWN = "Unknown";
     }
 
+    @Retention(RetentionPolicy.SOURCE)
+    @StringDef({})
+    @interface QuestionType {
+        String MULTIPLE = "multiple";
+        String BOOLEAN  = "boolean";
+        String ANY      = null;
+    }
+
     /**
      * Interface implementing the generating or retrieving of new questions for a Trivia game
      */
@@ -78,48 +86,86 @@ public class TriviaGame {
     private List<TriviaQuestion> questions;
     private int score;
     private String gameDifficulty;
+    private String gameCategory;
+    private  @QuestionType String gameQuestionType;
     private QuestionsHandler questionsHandler;
 
     /**
      * Most precise constructor; sets the amount of questions to be asked as well as their difficulty
+     *
      * @param qAmount the amount of questions to be asked before this game ends;
      *                when 0 is passed the game will go on forever
-     * @param difficulty the difficulty of the questions asked; must be one defined in {@link Difficulty}.
+     * @param qDifficulty the difficulty of the questions asked; must be one defined in {@link Difficulty}.
      *                   When {@link Difficulty#UNKNOWN} is passed it will add questions of all
      *                   difficulties
+     * @param qType  the type of questions to retrieve, must be one of {@link QuestionType};
+     *               set to {@link QuestionType#ANY} for any category
+     * @param qCategory the category to retrieve questions from; set to null for any category
      *
      *
      */
-    public TriviaGame(int qAmount, @Difficulty String difficulty) {
+    public TriviaGame(
+            int qAmount,
+            @Difficulty String qDifficulty,
+            @QuestionType String qType,
+            String qCategory) {
         this.questionAmount = qAmount;
-        this.gameDifficulty = difficulty;
+        this.gameDifficulty = qDifficulty;
+        this.gameCategory = qCategory;
+        this.gameQuestionType = qType;
+
+        // these are not be set by humans
         this.score = 0;
         this.questionIndex = 0;
         this.gameOver = false;
     }
 
     /**
+     * Alternative constructor
+     * Categories will automatically be set "any", meaning questions of all categories will be asked
+     *
+     * @param qAmount the amount of questions to be asked before this game ends;
+     *                when 0 is passed the game will go on forever
+     * @param qDifficulty the difficulty of the questions asked; must be one defined in {@link Difficulty}.
+     *                   When {@link Difficulty#UNKNOWN} is passed it will add questions of all
+     *                   difficulties
+     * @param qType  the type of questions to retrieve, must be one of {@link QuestionType};
+     *               set to {@link QuestionType#ANY} for any category
+     */
+    public TriviaGame(int qAmount, @Difficulty String qDifficulty, @QuestionType String qType) {
+        this(qAmount, qDifficulty, qType, null);
+    }
+
+
+    /**
      * Standard constructor
-     * Difficulty will be automatically set to {@link Difficulty#UNKNOWN}
-     * meaning questions of all difficulties will be asked.
+     * Difficulty Category and QuestionType will  will be automatically set to "any"
+     * meaning questions of all difficulties, categories, and types will be asked.
      *
      * @param qAmount the amount of questions to be asked before the game ends
      *                when 0 is passed the game will go on forever
      */
     public TriviaGame(int qAmount) {
-        this(qAmount, Difficulty.UNKNOWN);
+        this(qAmount, Difficulty.UNKNOWN, QuestionType.ANY, null);
     }
+
+
+
+
 
     /**
      * Alternative constructor
      * The amount of questions to be asked will be set to 0, meaning the game will go on forever
      *
-     * @param difficulty the difficulty of the questions asked; must be one defined in {@link Difficulty}.
+     * @param qDifficulty the difficulty of the questions asked; must be one defined in {@link Difficulty}.
      *                   When {@link Difficulty#UNKNOWN} is passed it will add questions of all
      *                   difficulties
+     * @param qType  the type of questions to retrieve, must be one of {@link QuestionType};
+     *               set to {@link QuestionType#ANY} for any category
+     * @param qCategory the category to retrieve questions from; set to null for any category
      */
-    public TriviaGame(@Difficulty String difficulty) {
-        this(0, difficulty);
+    public TriviaGame(@Difficulty String qDifficulty, @QuestionType String qType, String qCategory) {
+        this(0, qDifficulty, qType, qCategory);
     }
 
     /**
@@ -128,7 +174,7 @@ public class TriviaGame {
      *
      */
     public TriviaGame() {
-        this(0, Difficulty.UNKNOWN);
+        this(0, Difficulty.UNKNOWN, QuestionType.ANY, null);
     }
 
     /**
