@@ -1,9 +1,6 @@
 package online.madeofmagicandwires.trivial;
 
-import android.support.annotation.StringDef;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
 /**

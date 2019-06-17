@@ -8,12 +8,14 @@ import android.support.test.filters.SmallTest;
 import android.support.test.internal.runner.listener.InstrumentationRunListener;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+import android.util.SparseArray;
 
 import org.json.JSONArray;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +30,8 @@ public class TriviaRequestHelperTest {
 
     private String seshtoken;
     private String resetToken;
-    private JSONArray questionArr;
+    private List<TriviaQuestion> questionArr;
+    private SparseArray<String> categoriesArr;
 
 
     /**
@@ -144,15 +147,31 @@ public class TriviaRequestHelperTest {
     public void requestQuestions() throws InterruptedException {
         final CountDownLatch signal = new CountDownLatch(1);
         TriviaRequestHelper.QuestionRequestListener testListener = new TriviaRequestHelper.QuestionRequestListener() {
-            @Override
-            public void OnQuestionsRequestSuccess(JSONArray questions) {
-                questionArr = questions;
-                signal.countDown();
-            }
-
+            /**
+             * called when an error occurs during a request to the OpenTrivia API
+             *
+             * @param lastRequest the endpoint of the request;
+             *                    note that this might not be entirely accurate due to async requests
+             * @param errorMsg    the error message included.
+             */
             @Override
             public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
-                signal.countDown(); //release thread if error occurred
+                Log.e("requestQuestions", lastRequest + ": " + errorMsg);
+            }
+
+            /**
+             * Called if a TriviaDB question request successfully resolved
+             *
+             *
+             * @param questions a {@link List} of {@link TriviaQuestion} objects
+             *                  representing the trivia questions that were retrieved from the TriviaDB
+             * @see TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionRequestListener)
+             */
+            @Override
+            public void OnQuestionsRequestSuccess(List<TriviaQuestion> questions) {
+                questionArr = questions;
+                signal.countDown();
+
             }
         };
 
@@ -160,9 +179,65 @@ public class TriviaRequestHelperTest {
         boolean resolved = signal.await(30, TimeUnit.SECONDS);
         assertTrue("Request did not resolve within 30 seconds!", resolved);
 
-        // test response
+        // test response list
         assertNotNull("Did not retrieve any questions array from questions request!", questionArr);
-        assertNotEquals("Questions Array was empty!", 0, questionArr.length());
+        assertEquals("Questions Array was empty!", 10, questionArr.size());
+
+        // test question object from list
+
+        questionArr.forEach((testQuestion) -> {
+            assertNotNull("Retrieved question did not have a question!", testQuestion.getQuestion());
+            assertFalse("Retrieved question's question was empty!", testQuestion.getQuestion().isEmpty());
+
+            // test category
+            assertNotNull("Retrieved question did not have a category!", testQuestion.getCategory());
+            assertFalse("Retrieved question's answers were empty!", testQuestion.getAnswers().isEmpty());
+
+            // test difficulty
+            assertNotNull("Retrieved question did not have a difficulty!", testQuestion.getDifficulty());
+            assertFalse("Retrieved question's difficulty was empty!", testQuestion.getDifficulty().isEmpty());
+            @TriviaGame.Difficulty String testQuestionDifficulty = testQuestion.getDifficulty();
+            assertNotNull("Difficulty was not set in TriviaGame.Difficulty!", testQuestionDifficulty);
+
+            // test correct answer
+            assertNotNull("Retrieved question did not have a correct answer!", testQuestion.getRightAnswer());
+            assertFalse("Retrieved question's correct answer was empty!", testQuestion.getRightAnswer().isEmpty());
+        });
+    }
+
+    /**
+     * Tests {@link TriviaRequestHelper#requestCategories(TriviaRequestHelper.CategoriesRequestListener)}
+     *       and {@link TriviaRequestHelper.CategoriesRequestListener}
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    public void requestCategories() throws InterruptedException {
+        CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.CategoriesRequestListener testListener = new TriviaRequestHelper.CategoriesRequestListener() {
+            @Override
+            public void OnCategoriesRequestSuccess(SparseArray<String> categories) {
+                categoriesArr = categories;
+                signal.countDown();
+            }
+
+            @Override
+            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+                signal.countDown();
+            }
+        };
+        helper.requestCategories(testListener);
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+        assertTrue("Categories request took too long to resolve!", resolved);
+        assertNotNull("Retrieved Category Array was not saved!", categoriesArr);
+        assertNotEquals("Retrieved Category Array was empty!", 0, categoriesArr.size());
+
+        // test individual entries
+        for(int i=0;i<categoriesArr.size();i++) {
+            Log.d("requestCategories", categoriesArr.keyAt(i) +  ": " + categoriesArr.valueAt(i));
+            assertNotEquals("Category id was not saved correctly!", categoriesArr.keyAt(i), -1);
+            assertNotEquals("Category name was not saved correctly!" , "Unknown");
+        }
     }
 
 }

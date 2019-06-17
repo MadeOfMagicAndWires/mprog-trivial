@@ -10,6 +10,7 @@ import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -107,7 +108,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @param method the method to be used; must be one of {@link com.android.volley.Request.Method}
      * @param url the endpoint to send the request to
      * @param queryParams the query parameters to attach to the request url
-     * @see #makeRequest(int, String, Map) for more passing than one query parameter;
+     * @see #makeRequest(int, String, Map) for passing more than one one two query parameters
      */
     public void makeRequest(int method, String url, String queryParams) {
         makeRequest(method, url + "?" + queryParams, (JSONObject) null);
@@ -119,12 +120,20 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @param url the endpoint to send the request to
      * @param queryParams an array of query parameters to attach to the request url
      * @see #makeRequest(int, String, String) to pass query parameters as a string;
-     *                                        useful when you've fewer parameters
+     *                                        useful when you've got fewer parameters
      */
     public void makeRequest(int method, String url, Map<String, String> queryParams) {
         Uri.Builder queryUri = Uri.parse(url).buildUpon();
         queryParams.forEach(queryUri::appendQueryParameter);
         makeRequest(method, queryUri.build(), null);
+    }
+
+    /**
+     * Make a simple GET Volley request
+     * @param url the endpoint to send the request to
+     */
+    public void makeRequest(String url) {
+        makeRequest(Request.Method.GET, url, (JSONObject) null);
     }
 
 

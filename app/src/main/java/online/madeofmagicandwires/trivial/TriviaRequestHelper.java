@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.android.volley.Request;
 import com.android.volley.VolleyError;
@@ -19,7 +20,12 @@ import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A Helper class for the making and interpreting requests to the OpenTriviaDB API.
@@ -48,10 +54,20 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
      */
     public interface SessionTokenRequestListener extends TriviaRequestListener {
         /**
-         * called when a TriviaDB session request has been successfully requeste
+         * Called when a TriviaDB session token request has been successfully requested
+         *
          * @param token the session token retrieved
+         * @see TriviaRequestHelper#requestSessionToken(TriviaRequestHelper.SessionTokenRequestListener)
          */
         void OnTokenRequestSuccess(String token);
+
+        /**
+         * Called when a TriviaDB session token has been succesfully reset,
+         * meaning all previously asked questions can be asked again
+         *
+         * @param token the session token that has been reset
+         * @see TriviaRequestHelper#resetSessionToken(TriviaRequestHelper.SessionTokenRequestListener)
+         */
         void OnTokenResetSuccess(String token);
     }
 
@@ -61,9 +77,27 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
      * @see #requestQuestions(int, QuestionRequestListener)
      */
     public interface QuestionRequestListener extends TriviaRequestListener {
-        void OnQuestionsRequestSuccess(JSONArray questions);
+        /**
+         * Called when a TriviaDB question request successfully resolved
+         * @param questions a {@link List} of {@link TriviaQuestion} objects
+         *                  representing the trivia questions that were retrieved from the TriviaDB
+         * @see TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionRequestListener)
+         */
+        void OnQuestionsRequestSuccess(List<TriviaQuestion> questions);
 
     }
+
+    /**
+     * Listener interface for responding to a category requests
+     */
+    public interface CategoriesRequestListener extends TriviaRequestListener {
+        /**
+         * Called when a TriviaDB categories request has successfully resolved
+         * @param categories a JSONObject containing the categories under the "trivia_categories" key
+         */
+        void OnCategoriesRequestSuccess(SparseArray<String> categories);
+    }
+
 
     /** root url for the API **/
     private final static String API_URL = "https://opentdb.com/";
@@ -94,9 +128,12 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     private @EndPoint String lastRequest;
     private TriviaRequestListener listener;
     private String sessionToken;
+    private Integer category;
+    private @TriviaGame.Difficulty String difficulty;
 
     /**
      * Standard constructor
+     *
      * @param appContext the application context, needed for the Volley Request Queue
      */
     private TriviaRequestHelper(@NonNull Context appContext){
@@ -104,7 +141,8 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     }
 
     /**
-     * Used to instantiate the TriviaRequestsHelper class
+     * Used to retrieve the TriviaRequestsHelper singleton
+     *
      * @param appContext the application context, needed for the Volley Request Queue
      * @return the singleton TriviaRequestHelper instance
      */
@@ -112,6 +150,23 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         if(instance==null) {
             instance = new TriviaRequestHelper(appContext);
         }
+        return instance;
+    }
+
+    /**
+     * Used to retrieve the TriviaRequestHelper singloton and sets and sets
+     * the difficulty and category according to the values of the {@link TriviaGame} object
+     *
+     * @param appContext the application context, needed for the Volley Request Queue
+     * @param game the TriviaGame to retrieve difficulty and categoryId from
+     * @return the singleton TriviaRequestHelper instance with the provided settings
+     */
+    public static TriviaRequestHelper getInstance(
+            @NonNull Context appContext,
+            TriviaGame game) {
+        instance = getInstance(appContext);
+        instance.setCategoryId(game.getGameCategoryId());
+        instance.setDifficulty(game.getGameDifficulty());
         return instance;
     }
 
@@ -124,16 +179,121 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         return sessionToken;
     }
 
+
     /**
-     * Callback method that an error has been occurred with the provided error code and optional
-     * user-readable message.
-     *
-     * @param error exception containing information on what went wrong
+     * Gets the difficulty of this session
+     * @return
      */
-    @Override
-    public void onErrorResponse(VolleyError error) {
-        error.printStackTrace();
-        VolleyLog.e("TriviaRequestHelper", error.getLocalizedMessage());
+    public @TriviaGame.Difficulty String getDifficulty() {
+        return difficulty;
+    }
+
+    /**
+     * Sets the difficulty of this session
+     * @param difficulty the difficulty of questions to request from the TriviaDB,
+     *                   must be one of {@link TriviaGame.Difficulty}
+     */
+    public void setDifficulty(@TriviaGame.Difficulty String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    /**
+     * Gets the category of this session
+     *
+     * @return the category of questions to request from the TriviaDB,
+     *         if set to null questions of all categories will be requested
+     */
+    public Integer getCategoryId() {
+        return category;
+    }
+
+    /**
+     * Sets the category of this session
+     *
+     * @param category the category questions requested this session should belong to,
+     *                 if set to null questions of all categories will be requested
+     */
+    public void setCategoryId(Integer category) {
+        this.category = category;
+    }
+
+    /**
+     * Requests a session token from the OpenTriviaDB
+     * @param listener the event listener interface to be called after requests have been resolved
+     * @see SessionTokenRequestListener for the listener interface
+     */
+    public void requestSessionToken(SessionTokenRequestListener listener) {
+        // pre-request
+        prepareForRequest(EndPoint.SESSION, listener);
+
+        makeRequest(Request.Method.GET, API_URL + EndPoint.SESSION, "command=request");
+    }
+
+    /**
+     * Request to reset a session token from the OpenTriviaDB
+     * @param listener the event listener interface to be called after requests have been resolved
+     * @see SessionTokenRequestListener for the listener interface
+     */
+    public void resetSessionToken(SessionTokenRequestListener listener) {
+        // pre-request
+        prepareForRequest(EndPoint.SESSION, listener);
+
+        // session token exists
+        if(this.sessionToken != null && !this.sessionToken.isEmpty()) {
+
+            // set the query parameters and make the request
+            HashMap<String, String> params = new HashMap<>();
+            params.put("command", "reset");
+            params.put("token", this.sessionToken);
+            makeRequest(
+                    Request.Method.GET,
+                    API_URL + EndPoint.SESSION,
+                    params
+            );
+        } else { // just request a new token if none exists already
+            requestSessionToken(listener);
+        }
+
+    }
+
+
+    /**
+     * Requests the available Trivia categories from the TriviaDB
+     * @param listener the event listener interface to be called after requests have been resolved
+     */
+    public void requestCategories(CategoriesRequestListener listener) {
+        prepareForRequest(EndPoint.CATEGORY, listener);
+        makeRequest(API_URL + EndPoint.CATEGORY);
+    }
+
+    /**
+     * Requests a set amount of questions from the OpenTriviaDB
+     * @param amount the amount of questions to request
+     * @param listener the event listener interface to be called after requests have been resolved
+     * @see QuestionRequestListener for the listener interface
+     */
+    public void requestQuestions(int amount, QuestionRequestListener listener) {
+        //pre-request
+        prepareForRequest(EndPoint.TRIVIA, listener);
+
+        //set the query parameters: amount of questions, encoding, and session token if available
+        HashMap<String, String> params = new HashMap<>();
+        // pass on the amount of questions to be requested, maximum of 50.
+        params.put("amount", (amount < 50) ? String.valueOf(amount) : String.valueOf(50));
+        // set value encoding to ISO 3986
+        params.put("encode", "url3986");
+        if(sessionToken != null && !sessionToken.isEmpty()) {
+            params.put("token", sessionToken);
+        }
+        if(difficulty != null) {
+            params.put("difficulty", difficulty);
+        }
+        if(category != null && category > 50) {
+            params.put("category", category.toString());
+        }
+
+        makeRequest(Request.Method.GET, API_URL + EndPoint.TRIVIA, params);
+
     }
 
     /**
@@ -162,9 +322,22 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
                 }
                 // Trivia questions parsing
                 if(response.has("results")) {
+                    // parse each question and add them to a list
                     JSONArray questions = response.optJSONArray("results");
+                    List<TriviaQuestion> results = new ArrayList<>();
+                    for(int i=0;i<questions.length();i++) {
+                        try {
+                            TriviaQuestion question = parseQuestionJSON(questions.getJSONObject(i));
+                            results.add(question);
+                        } catch (JSONException e) {
+                            Log.e("TriviaRequestHelper", e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // call event listener if available and pass on the results
                     if(listener instanceof QuestionRequestListener) {
-                        ((QuestionRequestListener) listener).OnQuestionsRequestSuccess(questions);
+                        ((QuestionRequestListener) listener).OnQuestionsRequestSuccess(results);
                     }
                 }
 
@@ -183,25 +356,60 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
                 break;
 
             default:
-                listener.OnResponseError(
-                        lastRequest,
-                        "Could not parse JSON object: " + response.toString()
-                );
+                // Handle Trivia Categories request
+                if(response.has("trivia_categories")) {
+                    if(listener instanceof CategoriesRequestListener) {
+                        SparseArray<String> categories = new SparseArray<>();
+                        JSONArray categoryArr = response.optJSONArray("trivia_categories");
+                        for(int i=0;i<categoryArr.length();i++){
+                            JSONObject entry = categoryArr.optJSONObject(i);
+                            if(entry != null) {
+                                categories.append(
+                                        entry.optInt("id", -1),
+                                        entry.optString("name", "Unknown")
+                                );
+                            }
+
+                        }
+                        if(listener instanceof CategoriesRequestListener) {
+                            ((CategoriesRequestListener) listener)
+                                    .OnCategoriesRequestSuccess(categories);
+                        }
+                    }
+                }
+
+                // Otherwise, we don't know what this is, error out
+                else {
+                    listener.OnResponseError(
+                            lastRequest,
+                            "Could not parse retrieved JSON object: " + response.toString()
+                    );
+                }
+
+
 
         }
 
     }
 
     /**
-     * Gets the event listener set to resolve API requests
-     * @return an object implementing the TriviaRequestListener interface
+     * Callback method that an error has been occurred with the provided error code and optional
+     * user-readable message.
+     *
+     * @param error exception containing information on what went wrong
      */
-    public TriviaRequestListener getListener() {
-        return listener;
+    @Override
+    public void onErrorResponse(VolleyError error) {
+        error.printStackTrace();
+        VolleyLog.e("TriviaRequestHelper", error.getLocalizedMessage());
+        if(listener != null) {
+            listener.OnResponseError(lastRequest, error.getLocalizedMessage());
+        }
     }
 
     /**
-     * Handles pre-request necessities.
+     * Handles pre-request necessities
+     *
      * @param endPoint sets the last request's that can be used for error handling
      * @param listener sets the event listener for the current request
      */
@@ -212,65 +420,20 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         }
     }
 
-    /**
-     * Requests a session token from the OpenTriviaDB
-     * @param listener listener listener for this TriviaRequest instance
-     * @see SessionTokenRequestListener for the listener interface
-     */
-    public void requestSessionToken(SessionTokenRequestListener listener) {
-        // pre-request
-        prepareForRequest(EndPoint.SESSION, listener);
 
-        makeRequest(Request.Method.GET, API_URL + EndPoint.SESSION, "command=request");
-    }
 
     /**
-     * Request to reset a session token from the OpenTriviaDB
-     * @param listener listener listener for this TriviaRequest instance
-     * @see SessionTokenRequestListener for the listener interface
+     * Returns a URL encoded response to a human-readable UTF-8 String
+     *
+     * @param encoded the string to be decoded
+     * @return the decoded string
      */
-    public void resetSessionToken(SessionTokenRequestListener listener) {
-        // pre-request
-        prepareForRequest(EndPoint.SESSION, listener);
-
-        // session token exists
-        if(this.sessionToken != null && !this.sessionToken.isEmpty()) {
-
-            // set the query paramaters and make the request
-            HashMap<String, String> params = new HashMap<>();
-            params.put("command", "reset");
-            params.put("token", this.sessionToken);
-            makeRequest(
-                    Request.Method.GET,
-                    API_URL + EndPoint.SESSION,
-                    params
-            );
-        } else { // just request a new token if none exists already
-            requestSessionToken(listener);
+    private String decodeResponseStr(String encoded) {
+        try {
+            return URLDecoder.decode(encoded, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return null;
         }
-
-    }
-
-    /**
-     * Requests a set amount of questions from the OpenTriviaDB
-     * @param amount the amount of questions to request
-     * @param listener the event listener interface that be called to resolve the response
-     * @see QuestionRequestListener for the listener interface
-     */
-    public void requestQuestions(int amount, QuestionRequestListener listener) {
-        //pre-request
-        prepareForRequest(EndPoint.TRIVIA, listener);
-
-        //set the query parameters: amount of questions, encoding, and session token if available
-        HashMap<String, String> params = new HashMap<>();
-        params.put("amount", Integer.toString(amount));
-        params.put("encoding", "url3986");
-        if(sessionToken != null && !sessionToken.isEmpty()) {
-            params.put("token", sessionToken);
-        }
-
-        makeRequest(Request.Method.GET, API_URL + EndPoint.TRIVIA, params);
-
     }
 
     /**
@@ -279,7 +442,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
      * @param question the JSONObject to parse for any question
      * @return a TriviaQuestion object containing the data parsed from the JSONObject
      */
-    public TriviaQuestion parseQuestionJSON(JSONObject question) throws JSONException {
+    private TriviaQuestion parseQuestionJSON(JSONObject question) throws JSONException {
         @TriviaGame.QuestionType String qType = question.getString("type");
         switch (qType) {
             case TriviaGame.QuestionType.BOOLEAN:
@@ -290,27 +453,25 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
                         decodeResponseStr(question.getString("category"))
                 );
             case TriviaGame.QuestionType.MULTIPLE:
-                // TODO parse multiple choice questions
-                return null;
+                // Parse incorrect_answers array
+                JSONArray wrongAnswersArr = question.getJSONArray("incorrect_answers");
+                String[] wrongAnswers = new String[wrongAnswersArr.length()];
+                for(int i=0;i<wrongAnswersArr.length();i++){
+                    wrongAnswers[i] = decodeResponseStr(wrongAnswersArr.getString(i));
+                }
+
+                return new MultipleChoiceQuestion(
+                        decodeResponseStr(question.getString("question")),
+                        decodeResponseStr("correct_answer"),
+                        wrongAnswers,
+                        question.getString("difficulty"),
+                        decodeResponseStr(question.getString("category"))
+                );
+
 
                 default:
-                    return null;
+                    throw new JSONException("Could not find trivia question from JSON Object");
 
-        }
-
-    }
-
-    /**
-     * Returns a URL encoded response to a human-readable UTF-8 String
-     *
-     * @param encoded the string to be decoded
-     * @return the decoded string
-     */
-    public String decodeResponseStr(String encoded) {
-        try {
-            return URLDecoder.decode(encoded, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return "";
         }
     }
 }

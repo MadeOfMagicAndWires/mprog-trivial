@@ -85,8 +85,8 @@ public class TriviaGame {
     private int questionIndex;
     private List<TriviaQuestion> questions;
     private int score;
-    private String gameDifficulty;
-    private String gameCategory;
+    private @Difficulty String gameDifficulty;
+    private Integer gameCategory;
     private  @QuestionType String gameQuestionType;
     private QuestionsHandler questionsHandler;
 
@@ -108,7 +108,7 @@ public class TriviaGame {
             int qAmount,
             @Difficulty String qDifficulty,
             @QuestionType String qType,
-            String qCategory) {
+            Integer qCategory) {
         this.questionAmount = qAmount;
         this.gameDifficulty = qDifficulty;
         this.gameCategory = qCategory;
@@ -164,7 +164,7 @@ public class TriviaGame {
      *               set to {@link QuestionType#ANY} for any category
      * @param qCategory the category to retrieve questions from; set to null for any category
      */
-    public TriviaGame(@Difficulty String qDifficulty, @QuestionType String qType, String qCategory) {
+    public TriviaGame(@Difficulty String qDifficulty, @QuestionType String qType, Integer qCategory) {
         this(0, qDifficulty, qType, qCategory);
     }
 
@@ -178,12 +178,57 @@ public class TriviaGame {
     }
 
     /**
+     * Retrieves the current question of the game
+     * @return TriviaQuestion object representing the question to be answered next
+     *
+     * @throws IndexOutOfBoundsException if the question index is higher
+     * than the total amount of questions to be asked before the game ends
+     */
+    public TriviaQuestion getCurrentQuestion() throws ArrayIndexOutOfBoundsException {
+        return questions.get(questionIndex);
+    }
+
+    /**
+     * Retrieves the category questions of this game belong to
+     *
+     * @return the category any question of this game will belong to;
+     *  if set to null questions of all categories will be asked
+     */
+    public int getGameCategoryId() {
+        return gameCategory;
+    }
+
+    /**
+     * Sets the category all questions of this game should belong to
+     *
+     * @param gameCategory the category all questions asked during this game should belong to
+     *                     if set to null questions of all categories can be asked
+     */
+    public void setGameCategoryId(int gameCategory) {
+        this.gameCategory = gameCategory;
+    }
+
+    /**
      * Gets the difficulty set for this game
-     * @return the difficulty of the questions to be asked this game.
-     * If set to {@link Difficulty#UNKNOWN} it means questions of all difficulties will be set
+     *
+     * @return the difficulty of the questions to be asked this game
+     *                        if set to {@link Difficulty#UNKNOWN} it means questions of all
+     *                        difficulties can be asked
      */
     public String getGameDifficulty() {
         return gameDifficulty;
+    }
+
+    /**
+     * Sets the difficulty of this game
+     *
+     * @param gameDifficulty  he difficulty of the questions to be asked this game;
+     *                        must be one of {@link TriviaGame.Difficulty} and
+     *                        when set to {@link Difficulty#UNKNOWN} it means questions of all
+     *                        difficulties can be asked
+     */
+    public void setGameDifficulty(@Difficulty String gameDifficulty) {
+        this.gameDifficulty = gameDifficulty;
     }
 
     /**
@@ -202,17 +247,6 @@ public class TriviaGame {
      */
     public int getQuestionIndex() {
         return questionIndex;
-    }
-
-    /**
-     * Retrieves the current question of the game
-     * @return TriviaQuestion object representing the question to be answered next
-     *
-     * @throws IndexOutOfBoundsException if the question index is higher
-     * than the total amount of questions to be asked before the game ends
-     */
-    public TriviaQuestion getCurrentQuestion() throws ArrayIndexOutOfBoundsException {
-         return questions.get(questionIndex);
     }
 
     /**
