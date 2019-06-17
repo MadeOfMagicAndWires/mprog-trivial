@@ -1,16 +1,13 @@
 package online.madeofmagicandwires.trivial;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
-import android.support.test.internal.runner.listener.InstrumentationRunListener;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.util.SparseArray;
 
-import org.json.JSONArray;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,10 +25,22 @@ public class TriviaRequestHelperTest {
     private Context appContext;
     private TriviaRequestHelper helper;
 
+    // needed by requestSessionToken
     private String seshtoken;
     private String resetToken;
+
+    // needed by requestQuestions
     private List<TriviaQuestion> questionArr;
+
+    // needed by requestCategories
     private SparseArray<String> categoriesArr;
+
+
+    // needed by requestQuestionCount
+    private int globalTotal;
+    private int globalCategoryTotal;
+    private int categoryTotal;
+    private int categoryByDifficulty;
 
 
     /**
@@ -55,27 +64,27 @@ public class TriviaRequestHelperTest {
 
 
     /**
-     * Tests {@link TriviaRequestHelper#requestSessionToken(TriviaRequestHelper.SessionTokenRequestListener)}
+     * Tests {@link TriviaRequestHelper#requestSessionToken(TriviaRequestHelper.SessionTokenResponseListener)}
      * @throws InterruptedException when this method is interrupted while waiting for a network response
      */
     @Test
     public void requestSessionToken() throws InterruptedException {
         final CountDownLatch signal = new CountDownLatch(1);
-        final TriviaRequestHelper.SessionTokenRequestListener testListener =
-                new TriviaRequestHelper.SessionTokenRequestListener() {
+        final TriviaRequestHelper.SessionTokenResponseListener testListener =
+                new TriviaRequestHelper.SessionTokenResponseListener() {
             @Override
-            public void OnTokenRequestSuccess(String token) {
+            public void OnRequestTokenResponse(String token) {
                 seshtoken = token;
                 signal.countDown();
             }
 
             @Override
-            public void OnTokenResetSuccess(String token) {
+            public void OnResetTokenResponse(String token) {
                 // not used here
             }
 
             @Override
-            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+            public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
                 Log.e("requestSessionToken", "request error: " +  errorMsg);
                 signal.countDown();
 
@@ -85,7 +94,7 @@ public class TriviaRequestHelperTest {
         helper.requestSessionToken(testListener);
         // wait till the requestSessionToken request has resolved
         boolean resolved = signal.await(30, TimeUnit.SECONDS);
-        assertFalse("Request was timed out!", resolved);
+        assertTrue("Request was timed out!", resolved);
 
         Log.d("Session token: ", seshtoken);
         assertNotNull("Session token has not been filled in!", seshtoken);
@@ -96,42 +105,45 @@ public class TriviaRequestHelperTest {
     }
 
     /**
-     * Tests {@link TriviaRequestHelper#resetSessionToken(TriviaRequestHelper.SessionTokenRequestListener)}
+     * Tests {@link TriviaRequestHelper#resetSessionToken(TriviaRequestHelper.SessionTokenResponseListener)}
      * @throws InterruptedException when this method is interrupted while waiting for a network response
      */
     @Test
     public void resetSessionToken() throws InterruptedException {
-        final CountDownLatch signal = new CountDownLatch(2);
-        final TriviaRequestHelper.SessionTokenRequestListener testListener =
-                new TriviaRequestHelper.SessionTokenRequestListener() {
+        final CountDownLatch initialSignal = new CountDownLatch(1);
+        final CountDownLatch resetSignal =  new CountDownLatch(1);
+        final TriviaRequestHelper.SessionTokenResponseListener testListener =
+                new TriviaRequestHelper.SessionTokenResponseListener() {
             @Override
-            public void OnTokenRequestSuccess(String token) {
+            public void OnRequestTokenResponse(String token) {
                 Log.d("resetSessionToken", "received initial token: " + token);
                 seshtoken = token;
-                signal.countDown();
+                initialSignal.countDown();
             }
 
             @Override
-            public void OnTokenResetSuccess(String token) {
+            public void OnResetTokenResponse(String token) {
                 Log.d("resetSessionToken", "reset token: " + token);
                 resetToken = token;
-                signal.countDown();
+                resetSignal.countDown();
             }
 
             @Override
-            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+            public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
                 Log.e("resetSessionToken", "request error: " +  errorMsg);
-                signal.countDown(); // release one thread whenever a request has failed
+                // release one thread whenever a request has failed
+                initialSignal.countDown();
+                resetSignal.countDown();
             }
         };
 
         helper.requestSessionToken(testListener);
         // wait till the requestSessionToken request has resolved
-        boolean resolved = signal.await(30, TimeUnit.SECONDS);
-        assertFalse("Request was timed out!", resolved);
+        boolean resolved = initialSignal.await(30, TimeUnit.SECONDS);
+        assertTrue("Request was timed out!", resolved);
         helper.resetSessionToken(testListener);
         // wait till resetSessionToken request has resolved
-        resolved = signal.await(30, TimeUnit.SECONDS);
+        resolved = resetSignal.await(30, TimeUnit.SECONDS);
         assertTrue("Request was timed out!", resolved);
 
         // testing response
@@ -140,13 +152,13 @@ public class TriviaRequestHelperTest {
     }
 
     /**
-     * Tests {@link TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionRequestListener)}
+     * Tests {@link TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionResponseListener)}
      *
      */
     @Test
     public void requestQuestions() throws InterruptedException {
         final CountDownLatch signal = new CountDownLatch(1);
-        TriviaRequestHelper.QuestionRequestListener testListener = new TriviaRequestHelper.QuestionRequestListener() {
+        TriviaRequestHelper.QuestionResponseListener testListener = new TriviaRequestHelper.QuestionResponseListener() {
             /**
              * called when an error occurs during a request to the OpenTrivia API
              *
@@ -155,7 +167,7 @@ public class TriviaRequestHelperTest {
              * @param errorMsg    the error message included.
              */
             @Override
-            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+            public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
                 Log.e("requestQuestions", lastRequest + ": " + errorMsg);
             }
 
@@ -165,10 +177,10 @@ public class TriviaRequestHelperTest {
              *
              * @param questions a {@link List} of {@link TriviaQuestion} objects
              *                  representing the trivia questions that were retrieved from the TriviaDB
-             * @see TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionRequestListener)
+             * @see TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionResponseListener)
              */
             @Override
-            public void OnQuestionsRequestSuccess(List<TriviaQuestion> questions) {
+            public void OnQuestionsResponse(List<TriviaQuestion> questions) {
                 questionArr = questions;
                 signal.countDown();
 
@@ -206,23 +218,23 @@ public class TriviaRequestHelperTest {
     }
 
     /**
-     * Tests {@link TriviaRequestHelper#requestCategories(TriviaRequestHelper.CategoriesRequestListener)}
-     *       and {@link TriviaRequestHelper.CategoriesRequestListener}
+     * Tests {@link TriviaRequestHelper#requestCategories(TriviaRequestHelper.CategoriesResponseListener)}
+     *       and {@link TriviaRequestHelper.CategoriesResponseListener}
      *
-     * @throws InterruptedException
+     * @throws InterruptedException when thread is interrupted
      */
     @Test
     public void requestCategories() throws InterruptedException {
-        CountDownLatch signal = new CountDownLatch(1);
-        TriviaRequestHelper.CategoriesRequestListener testListener = new TriviaRequestHelper.CategoriesRequestListener() {
+        final CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.CategoriesResponseListener testListener = new TriviaRequestHelper.CategoriesResponseListener() {
             @Override
-            public void OnCategoriesRequestSuccess(SparseArray<String> categories) {
+            public void OnCategoriesResponse(SparseArray<String> categories) {
                 categoriesArr = categories;
                 signal.countDown();
             }
 
             @Override
-            public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+            public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
                 signal.countDown();
             }
         };
@@ -238,6 +250,192 @@ public class TriviaRequestHelperTest {
             assertNotEquals("Category id was not saved correctly!", categoriesArr.keyAt(i), -1);
             assertNotEquals("Category name was not saved correctly!" , "Unknown");
         }
+    }
+
+    /**
+     * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
+     * with neither a category parameter or a session category set
+     *
+     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnQuestionCountResponse(int, int)
+     * @throws InterruptedException when thread is interrupted
+     */
+    @Test
+    public void requestQuestionCountGlobalNoCategory() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.QuestionCountResponseListener testListener =
+                new TriviaRequestHelper.QuestionCountResponseListener() {
+            @Override
+            public void OnQuestionCountResponse(int total, int categoryCount) {
+                globalTotal = total;
+                globalCategoryTotal = categoryCount;
+                signal.countDown();
+            }
+
+            @Override
+            public void OnCategoryQuestionCountResponse(int total, int difficultyCount) {
+                categoryTotal = total;
+                categoryByDifficulty = difficultyCount;
+                signal.countDown();
+
+            }
+
+            @Override
+            public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
+                Log.e("requestQuestionCount", errorMsg);
+                signal.countDown();
+            }
+        };
+
+        // global test, no session category
+        helper.setCategoryId(null);
+        helper.requestQuestionCount(testListener);
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+
+        Log.d("requestQuestionCount", "Testing 'Global count, no session category'");
+        assertTrue("Request took too long to resolve!", resolved);
+        assertNotEquals("Global count was not set!", -1, globalTotal);
+        assertNotEquals("Category  total was not set!", -1, globalCategoryTotal);
+        assertEquals("Category total differed from global total without session category set!", globalTotal, globalCategoryTotal);
+    }
+
+    /**
+     * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
+     * without category parameter but with a session category set
+     *
+     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnQuestionCountResponse(int, int)
+     * @throws InterruptedException when a thread is interrupted
+     */
+    @Test
+    public void requestQuestionCountGlobalWithCategory() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.QuestionCountResponseListener testListener =
+                new TriviaRequestHelper.QuestionCountResponseListener() {
+                    @Override
+                    public void OnQuestionCountResponse(int total, int categoryCount) {
+                        globalTotal = total;
+                        globalCategoryTotal = categoryCount;
+                        signal.countDown();
+                    }
+
+                    @Override
+                    public void OnCategoryQuestionCountResponse(int total, int difficultyCount) {
+                        categoryTotal = total;
+                        categoryByDifficulty = difficultyCount;
+                        signal.countDown();
+
+                    }
+
+                    @Override
+                    public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
+                        Log.e("requestQuestionCount", errorMsg);
+                        signal.countDown();
+                    }
+                };
+
+        // global test, with session category
+        helper.setCategoryId(22);
+        helper.requestQuestionCount(testListener);
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+
+        Log.d("requestQuestionCount", "Testing 'Global count, with session category'");
+        assertTrue("Request took too long to resolve!", resolved);
+        assertNotEquals("Global count was not set!", -1, globalTotal);
+        assertNotEquals("Category  total was not set!", -1, globalCategoryTotal);
+        assertNotEquals("Category total equalled global total with session category set!", globalTotal, globalCategoryTotal);
+    }
+
+    /**
+     * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
+     * with category parameter but no session difficulty set
+     *
+     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnCategoryQuestionCountResponse(int, int)
+     * @throws InterruptedException when a thread is interrupted
+     */
+    @Test
+    public void requestQuestionCountCategoryNoDifficulty() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.QuestionCountResponseListener testListener =
+                new TriviaRequestHelper.QuestionCountResponseListener() {
+                    @Override
+                    public void OnQuestionCountResponse(int total, int categoryCount) {
+                        globalTotal = total;
+                        globalCategoryTotal = categoryCount;
+                        signal.countDown();
+                    }
+
+                    @Override
+                    public void OnCategoryQuestionCountResponse(int total, int difficultyCount) {
+                        categoryTotal = total;
+                        categoryByDifficulty = difficultyCount;
+                        signal.countDown();
+
+                    }
+
+                    @Override
+                    public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
+                        Log.e("requestQuestionCount", errorMsg);
+                        signal.countDown();
+                    }
+                };
+
+        // category test, no session difficulty
+        helper.setCategoryId(22);
+        helper.setDifficulty(null);
+        helper.requestQuestionCount(testListener, 22);
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+
+        Log.d("requestQuestionCount", "Testing 'Category count, no session difficulty'");
+        assertTrue("Request took too long to resolve!", resolved);
+        assertNotEquals("Global count was not set!", -1, categoryTotal);
+        assertNotEquals("Category  total was not set!", -1, categoryByDifficulty);
+        assertEquals("Category total differed from category-by-difficulty without session difficulty set!", categoryTotal, categoryByDifficulty);
+    }
+
+    /**
+     * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
+     * with category parameter and a session difficulty set
+     *
+     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnCategoryQuestionCountResponse(int, int)
+     * @throws InterruptedException when a thread is interrupted
+     */
+    @Test
+    public void requestQuestionCountCategoryWithDifficulty() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        TriviaRequestHelper.QuestionCountResponseListener testListener =
+                new TriviaRequestHelper.QuestionCountResponseListener() {
+                    @Override
+                    public void OnQuestionCountResponse(int total, int categoryCount) {
+                        globalTotal = total;
+                        globalCategoryTotal = categoryCount;
+                        signal.countDown();
+                    }
+
+                    @Override
+                    public void OnCategoryQuestionCountResponse(int total, int difficultyCount) {
+                        categoryTotal = total;
+                        categoryByDifficulty = difficultyCount;
+                        signal.countDown();
+
+                    }
+
+                    @Override
+                    public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
+                        Log.e("requestQuestionCount", errorMsg);
+                        signal.countDown();
+                    }
+                };
+
+        // category test, with session difficulty
+        helper.setCategoryId(22);
+        helper.setDifficulty(TriviaGame.Difficulty.EASY);
+        helper.requestQuestionCount(testListener, 22);
+        boolean resolved = signal.await(30, TimeUnit.SECONDS);
+
+        Log.d("requestQuestionCount", "Testing 'Category count, with session difficulty'");
+        assertTrue("Request took too long to resolve!", resolved);
+        assertNotEquals("Global count was not set!", -1, categoryTotal);
+        assertNotEquals("Category  total was not set!", -1, categoryByDifficulty);
+        assertNotEquals("Category total equalled from category-by-difficulty with session category set!", categoryTotal, categoryByDifficulty);
     }
 
 }

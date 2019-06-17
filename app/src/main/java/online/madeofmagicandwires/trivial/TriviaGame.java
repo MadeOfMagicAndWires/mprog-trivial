@@ -20,14 +20,16 @@ public class TriviaGame {
         String MEDIUM = "Medium";
         String HARD  = "Hard";
         String UNKNOWN = "Unknown";
+        String ANY = null;
+
     }
 
     @Retention(RetentionPolicy.SOURCE)
-    @StringDef({})
+    @StringDef({QuestionType.BOOLEAN, QuestionType.MULTIPLE})
     @interface QuestionType {
         String MULTIPLE = "multiple";
         String BOOLEAN  = "boolean";
-        String ANY      = null;
+        String ANY = null;
     }
 
     /**
@@ -146,7 +148,7 @@ public class TriviaGame {
      *                when 0 is passed the game will go on forever
      */
     public TriviaGame(int qAmount) {
-        this(qAmount, Difficulty.UNKNOWN, QuestionType.ANY, null);
+        this(qAmount, Difficulty.ANY, QuestionType.ANY, null);
     }
 
 
@@ -174,7 +176,7 @@ public class TriviaGame {
      *
      */
     public TriviaGame() {
-        this(0, Difficulty.UNKNOWN, QuestionType.ANY, null);
+        this(0, Difficulty.ANY, QuestionType.ANY, null);
     }
 
     /**

@@ -9,7 +9,7 @@ import android.util.Log;
 
 
 public class GameActivity extends AppCompatActivity implements
-        TriviaRequestHelper.SessionTokenRequestListener {
+        TriviaRequestHelper.SessionTokenResponseListener {
 
     public interface GameView {
         void showNextQuestion();
@@ -51,9 +51,7 @@ public class GameActivity extends AppCompatActivity implements
      * Tests showing the placeholder before the content is loaded.
      */
     public void testShowNextQuestion() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        new Thread(() -> {
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -67,9 +65,8 @@ public class GameActivity extends AppCompatActivity implements
                         Log.e("testShowNext", "GameFragment not Added!");
                     }
                 }
-
             }
-        }).start();
+        ).start();
     }
 
 
@@ -81,7 +78,7 @@ public class GameActivity extends AppCompatActivity implements
      * @param errorMsg    the error message included.
      */
     @Override
-    public void OnResponseError(String lastRequest, @Nullable String errorMsg) {
+    public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
         Log.e("GameActivity", "request to " + lastRequest + " failed!");
         if(errorMsg != null) {
             Log.e("GameActivity", errorMsg);
@@ -94,12 +91,12 @@ public class GameActivity extends AppCompatActivity implements
      * @param token the session token retrieved
      */
     @Override
-    public void OnTokenRequestSuccess(String token) {
+    public void OnRequestTokenResponse(String token) {
         Log.i("TriviaRequestHelper", "Succesfully retrieved session token '" + token + "'");
     }
 
     @Override
-    public void OnTokenResetSuccess(String token) {
+    public void OnResetTokenResponse(String token) {
 
     }
 }

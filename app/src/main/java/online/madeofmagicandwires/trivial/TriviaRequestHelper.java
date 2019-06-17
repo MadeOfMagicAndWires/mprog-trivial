@@ -1,7 +1,6 @@
 package online.madeofmagicandwires.trivial;
 
 import android.content.Context;
-import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
@@ -22,10 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A Helper class for the making and interpreting requests to the OpenTriviaDB API.
@@ -36,72 +32,114 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
      * Listener interface superclass for responding to requests made by the TriviaRequestHelper class
      * Only handles the response errors and is not to be implemented directly
      */
-    private interface TriviaRequestListener {
+    private interface ErrorResponseListener {
         /**
          * called when an error occurs during a request to the OpenTrivia API
          * @param lastRequest the endpoint of the request;
          *                    note that this might not be entirely accurate due to async requests
          * @param errorMsg the error message included.
          */
-        void OnResponseError(@TriviaRequestHelper.EndPoint String lastRequest, @Nullable String errorMsg);
-    }
-
-    /**
-     * Listener interface for responding to session token requests by the TriviaRequestHelper class
-     *
-     * @see TriviaRequestHelper#requestSessionToken(SessionTokenRequestListener)
-     * @see TriviaRequestListener#resetSessionToken(SessionTokenRequestListener)
-     */
-    public interface SessionTokenRequestListener extends TriviaRequestListener {
-        /**
-         * Called when a TriviaDB session token request has been successfully requested
-         *
-         * @param token the session token retrieved
-         * @see TriviaRequestHelper#requestSessionToken(TriviaRequestHelper.SessionTokenRequestListener)
-         */
-        void OnTokenRequestSuccess(String token);
-
-        /**
-         * Called when a TriviaDB session token has been succesfully reset,
-         * meaning all previously asked questions can be asked again
-         *
-         * @param token the session token that has been reset
-         * @see TriviaRequestHelper#resetSessionToken(TriviaRequestHelper.SessionTokenRequestListener)
-         */
-        void OnTokenResetSuccess(String token);
-    }
-
-    /**
-     * Listener interface for responding to question requests by the TriviaRequestHelper
-     *
-     * @see #requestQuestions(int, QuestionRequestListener)
-     */
-    public interface QuestionRequestListener extends TriviaRequestListener {
-        /**
-         * Called when a TriviaDB question request successfully resolved
-         * @param questions a {@link List} of {@link TriviaQuestion} objects
-         *                  representing the trivia questions that were retrieved from the TriviaDB
-         * @see TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionRequestListener)
-         */
-        void OnQuestionsRequestSuccess(List<TriviaQuestion> questions);
-
+        void OnErrorResponse(@TriviaRequestHelper.EndPoint String lastRequest, @Nullable String errorMsg);
     }
 
     /**
      * Listener interface for responding to a category requests
      */
-    public interface CategoriesRequestListener extends TriviaRequestListener {
+    public interface CategoriesResponseListener extends ErrorResponseListener {
+
         /**
          * Called when a TriviaDB categories request has successfully resolved
          * @param categories a JSONObject containing the categories under the "trivia_categories" key
          */
-        void OnCategoriesRequestSuccess(SparseArray<String> categories);
+        void OnCategoriesResponse(SparseArray<String> categories);
+
+    }
+    /**
+     * Listener interface for responding to question requests by the TriviaRequestHelper
+     *
+     * @see #requestQuestions(int, QuestionResponseListener)
+     */
+    public interface QuestionResponseListener extends ErrorResponseListener {
+        /**
+         * Called when a TriviaDB question request successfully resolved
+         * @param questions a {@link List} of {@link TriviaQuestion} objects
+         *                  representing the trivia questions that were retrieved from the TriviaDB
+         * @see TriviaRequestHelper#requestQuestions(int, QuestionResponseListener)
+         */
+        void OnQuestionsResponse(List<TriviaQuestion> questions);
+
+
     }
 
+    /**
+     * Event listener interface for responding to question count requests
+     */
+    public interface QuestionCountResponseListener extends ErrorResponseListener {
+        /**
+         * Called when a global question count request is resolved
+         * @param total the global amount of (verified) questions in the TriviaDB,
+         *              or -1 if the value could not successfully be retrieved
+         * @param categoryCount the total count of questions belonging to the category
+         *                      set for this session;
+         *                      will be the same value as the global question count
+         *                      if this session's category is set to 'any',
+         *                      or -1 if the value could not be retrieved
+         */
+        void OnQuestionCountResponse(int total, int categoryCount);
 
-    /** root url for the API **/
-    private final static String API_URL = "https://opentdb.com/";
+        /**
+         * Called when a specific category's question count request is resolved
+         * @param total the total amount of (verified) questions belonging to this category,
+         *              or -1 if the value could not successfully be retrieved
+         * @param difficultyCount the total count of questions in this category of the difficulty
+         *                           set for this session;
+         *                           will be the same value as the category's total if the difficulty
+         *                           is set to null,
+         *                           or -1 if the number could not successfully be retrieved
+         */
+        void OnCategoryQuestionCountResponse(int total, int difficultyCount);
 
+    }
+
+    /**
+     * Listener interface for responding to session token requests by the TriviaRequestHelper class
+     *
+     * @see TriviaRequestHelper#requestSessionToken(SessionTokenResponseListener)
+     * @see ErrorResponseListener#resetSessionToken(SessionTokenResponseListener)
+     */
+    public interface SessionTokenResponseListener extends ErrorResponseListener {
+
+        /**
+         * Called when a TriviaDB session token request has been successfully requested
+         *
+         * @param token the session token retrieved
+         * @see TriviaRequestHelper#requestSessionToken(SessionTokenResponseListener)
+         */
+        void OnRequestTokenResponse(String token);
+        /**
+         * Called when a TriviaDB session token has been succesfully reset,
+         * meaning all previously asked questions can be asked again
+         *
+         * @param token the session token that has been reset
+         * @see TriviaRequestHelper#resetSessionToken(SessionTokenResponseListener)
+         */
+        void OnResetTokenResponse(String token);
+
+
+    }
+
+    /**
+     * Event Listener interface for responding to <b>all</b> TriviaDB related requests possible
+     * See the individual response interfaces for more fine-tuning but use this
+     * if you are unsure which to use or lazy
+     */
+    public interface TriviaResponseListener extends
+            CategoriesResponseListener,
+            QuestionResponseListener,
+            QuestionCountResponseListener,
+            SessionTokenResponseListener {
+
+    }
     /**
      * Android-efficient enum representing the various endpoints of the API
      *
@@ -115,6 +153,8 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
             EndPoint.COUNT           // requesting the total amount of questions in the database
     })
     @interface EndPoint {
+
+
         String SESSION = "api_token.php";
         String TRIVIA = "api.php";
         String CATEGORY = "api_category.php";
@@ -122,11 +162,13 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         String COUNT = "api_count_global.php";
     }
 
+    /** root url for the API **/
+    private final static String API_URL = "https://opentdb.com/";
 
     private static TriviaRequestHelper instance;
 
     private @EndPoint String lastRequest;
-    private TriviaRequestListener listener;
+    private ErrorResponseListener listener;
     private String sessionToken;
     private Integer category;
     private @TriviaGame.Difficulty String difficulty;
@@ -154,7 +196,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     }
 
     /**
-     * Used to retrieve the TriviaRequestHelper singloton and sets and sets
+     * Used to retrieve the TriviaRequestHelper singleton and sets
      * the difficulty and category according to the values of the {@link TriviaGame} object
      *
      * @param appContext the application context, needed for the Volley Request Queue
@@ -173,7 +215,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     /**
      * Gets the session token, if initialized
      * @return the session token in string format, or null if one isn't requested yet
-     * @see #requestSessionToken(SessionTokenRequestListener)
+     * @see #requestSessionToken(SessionTokenResponseListener)
      */
     public String getSessionToken() {
         return sessionToken;
@@ -182,7 +224,9 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
 
     /**
      * Gets the difficulty of this session
-     * @return
+     * @return the difficulty of this session;
+     *         when set to {@link TriviaGame.Difficulty#ANY} questions of all difficulties
+     *         will be retrieved
      */
     public @TriviaGame.Difficulty String getDifficulty() {
         return difficulty;
@@ -192,6 +236,8 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
      * Sets the difficulty of this session
      * @param difficulty the difficulty of questions to request from the TriviaDB,
      *                   must be one of {@link TriviaGame.Difficulty}
+     *                   when set to {@link TriviaGame.Difficulty#ANY} questions of
+     *                   all difficulties will be retrieved
      */
     public void setDifficulty(@TriviaGame.Difficulty String difficulty) {
         this.difficulty = difficulty;
@@ -220,9 +266,9 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     /**
      * Requests a session token from the OpenTriviaDB
      * @param listener the event listener interface to be called after requests have been resolved
-     * @see SessionTokenRequestListener for the listener interface
+     * @see TriviaRequestHelper.SessionTokenResponseListener for the listener interface
      */
-    public void requestSessionToken(SessionTokenRequestListener listener) {
+    public void requestSessionToken(SessionTokenResponseListener listener) {
         // pre-request
         prepareForRequest(EndPoint.SESSION, listener);
 
@@ -232,9 +278,9 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     /**
      * Request to reset a session token from the OpenTriviaDB
      * @param listener the event listener interface to be called after requests have been resolved
-     * @see SessionTokenRequestListener for the listener interface
+     * @see TriviaRequestHelper.SessionTokenResponseListener for the listener interface
      */
-    public void resetSessionToken(SessionTokenRequestListener listener) {
+    public void resetSessionToken(SessionTokenResponseListener listener) {
         // pre-request
         prepareForRequest(EndPoint.SESSION, listener);
 
@@ -256,23 +302,24 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
 
     }
 
-
     /**
      * Requests the available Trivia categories from the TriviaDB
+     *
      * @param listener the event listener interface to be called after requests have been resolved
+     * @see TriviaRequestHelper.CategoriesResponseListener for the event listener interface
      */
-    public void requestCategories(CategoriesRequestListener listener) {
+    public void requestCategories(CategoriesResponseListener listener) {
         prepareForRequest(EndPoint.CATEGORY, listener);
         makeRequest(API_URL + EndPoint.CATEGORY);
     }
 
     /**
      * Requests a set amount of questions from the OpenTriviaDB
-     * @param amount the amount of questions to request
+     * @param amount the amount of questions to request, up to a maximum of 50
      * @param listener the event listener interface to be called after requests have been resolved
-     * @see QuestionRequestListener for the listener interface
+     * @see TriviaRequestHelper.QuestionResponseListener for the listener interface
      */
-    public void requestQuestions(int amount, QuestionRequestListener listener) {
+    public void requestQuestions(int amount, QuestionResponseListener listener) {
         //pre-request
         prepareForRequest(EndPoint.TRIVIA, listener);
 
@@ -296,13 +343,57 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
 
     }
 
+
+
     /**
-     * Called when a response is received in JSON format.
+     * Request the total amount of (verified) questions in the TriviaDB database
+     *
+     * @param listener the event listener to be called once the request has been resolved
+     * @param categoryId the id of a specific category to check,
+     *                   if set to null it will query the count of all databases
+     * @see TriviaRequestHelper.QuestionCountResponseListener for the event listener interface
+     */
+    public void requestQuestionCount(
+            QuestionCountResponseListener listener,
+            @Nullable Integer categoryId) {
+        // check specific category
+        if(categoryId != null && categoryId != -1) {
+            prepareForRequest(EndPoint.CATEGORY_COUNT, listener);
+            makeRequest(
+                    Request.Method.GET,
+                    API_URL + EndPoint.CATEGORY_COUNT,
+                    "category=" + categoryId
+            );
+        }
+
+        else {
+            prepareForRequest(EndPoint.COUNT, listener);
+            makeRequest(API_URL + EndPoint.COUNT);
+        }
+
+    }
+
+
+    /**
+     * Requests the global total amount of (verified) questions
+     * @param listener the event listener to be called once the request has been resolved
+     */
+    public void requestQuestionCount(QuestionCountResponseListener listener) {
+        requestQuestionCount(listener, null);
+    }
+
+    /**
+     * Called when a text/json response is received.
      *
      * Handles the various types of responses and calls the right event listener when the request
      * has been resolved
      *
-     * @param response response object
+     * @param response response to the request in JSON format
+     *
+     * @see CategoriesResponseListener interface called when the response contains  trivia categories
+     * @see QuestionResponseListener interface called when the response contains trivia questions
+     * @see SessionTokenResponseListener interface called when the response contains a session token
+     *
      */
     @Override
     public void onResponse(JSONObject response) {
@@ -311,11 +402,14 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
                 // Session Token parsing
                 if(response.has("token")) {
                     sessionToken = response.optString("token", "");
-                    if(listener instanceof SessionTokenRequestListener) {
+
+                    // notify listener if available
+                    if(listener instanceof SessionTokenResponseListener) {
+
                         if(response.has("response_message")) { // initial token request
-                            ((SessionTokenRequestListener) listener).OnTokenRequestSuccess(sessionToken);
+                            ((SessionTokenResponseListener) listener).OnRequestTokenResponse(sessionToken);
                         } else { // token reset request
-                            ((SessionTokenRequestListener) listener).OnTokenResetSuccess(sessionToken);
+                            ((SessionTokenResponseListener) listener).OnResetTokenResponse(sessionToken);
                         }
                     }
 
@@ -335,30 +429,30 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
                         }
                     }
 
-                    // call event listener if available and pass on the results
-                    if(listener instanceof QuestionRequestListener) {
-                        ((QuestionRequestListener) listener).OnQuestionsRequestSuccess(results);
+                    // notify listener if available
+                    if(listener instanceof QuestionResponseListener) {
+                        ((QuestionResponseListener) listener).OnQuestionsResponse(results);
                     }
                 }
 
                 break;
             case 1:
-                listener.OnResponseError(lastRequest, "no results");
+                listener.OnErrorResponse(lastRequest, "no results");
                 break;
             case 2:
-                listener.OnResponseError(lastRequest, "contained an invalid parameter");
+                listener.OnErrorResponse(lastRequest, "contained an invalid parameter");
                 break;
             case 3:
-                listener.OnResponseError(lastRequest, "Token Not Found");
+                listener.OnErrorResponse(lastRequest, "Token Not Found");
                 break;
             case 4:
-                listener.OnResponseError(lastRequest, "no remaining questions");
+                listener.OnErrorResponse(lastRequest, "no remaining questions");
                 break;
 
             default:
                 // Handle Trivia Categories request
                 if(response.has("trivia_categories")) {
-                    if(listener instanceof CategoriesRequestListener) {
+                    if(listener instanceof CategoriesResponseListener) {
                         SparseArray<String> categories = new SparseArray<>();
                         JSONArray categoryArr = response.optJSONArray("trivia_categories");
                         for(int i=0;i<categoryArr.length();i++){
@@ -371,16 +465,87 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
                             }
 
                         }
-                        if(listener instanceof CategoriesRequestListener) {
-                            ((CategoriesRequestListener) listener)
-                                    .OnCategoriesRequestSuccess(categories);
+
+                        // notify listener if available
+                        if(listener instanceof CategoriesResponseListener) {
+                            ((CategoriesResponseListener) listener)
+                                    .OnCategoriesResponse(categories);
                         }
                     }
                 }
 
+                // Handle Global Trivia Question count requests
+                else if(response.has("overall")) {
+                    int overallQuestionCount;
+                    int categoryQuestionCount;
+                    overallQuestionCount = response.optJSONObject("overall").optInt("total_num_of_verified_questions", -1);
+
+                    // if a session category is set, set categoryQuestion to respective value from response
+                    if(getCategoryId() != null && getCategoryId() != -1 && response.has("categories")) {
+                        JSONObject category = response.optJSONObject("categories").optJSONObject(String.valueOf(getCategoryId()));
+                        if(category != null) {
+                            categoryQuestionCount = category.optInt("total_num_of_verified_questions", -1);
+                        } else {
+                            categoryQuestionCount = -1;
+                        }
+
+                    }
+                    // otherwise set it equal to overAllQuestionCount
+                    else {
+                        categoryQuestionCount = overallQuestionCount;
+                    }
+
+                    // notify listener if available
+                    if(listener instanceof QuestionCountResponseListener) {
+                        ((QuestionCountResponseListener) listener).OnQuestionCountResponse(overallQuestionCount, categoryQuestionCount);
+                    }
+
+                }
+
+                // Handle Category specific question count requests
+                else if(response.has("category_id")) {
+                    int totalCount;
+                    int difficultyCount;
+                    JSONObject category = response.optJSONObject("category_question_count");
+                    totalCount = category.optInt("total_question_count", -1);
+
+                    // if session difficulty is set difficultyCount to respective value from response
+                    if(getDifficulty() != null) {
+                        switch (getDifficulty()) {
+                            case TriviaGame.Difficulty.EASY:
+                                difficultyCount = category
+                                        .optInt("total_easy_question_count", -1);
+                                break;
+                            case TriviaGame.Difficulty.MEDIUM:
+                                difficultyCount = category
+                                        .optInt("total_medium_question_count", -1);
+                                break;
+                            case TriviaGame.Difficulty.HARD:
+                                difficultyCount = category
+                                        .optInt("total_hard_question_count", -1);
+                                break;
+                            default:
+                                difficultyCount = totalCount;
+                                break;
+                        }
+
+                    }
+                    // otherwise set it equal to totalCount
+                    else {
+                        difficultyCount = totalCount;
+                    }
+
+                    // notify listener if available
+                    if(listener instanceof QuestionCountResponseListener) {
+                        ((QuestionCountResponseListener) listener)
+                                .OnCategoryQuestionCountResponse(totalCount, difficultyCount);
+                    }
+
+                }
+
                 // Otherwise, we don't know what this is, error out
                 else {
-                    listener.OnResponseError(
+                    listener.OnErrorResponse(
                             lastRequest,
                             "Could not parse retrieved JSON object: " + response.toString()
                     );
@@ -403,7 +568,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         error.printStackTrace();
         VolleyLog.e("TriviaRequestHelper", error.getLocalizedMessage());
         if(listener != null) {
-            listener.OnResponseError(lastRequest, error.getLocalizedMessage());
+            listener.OnErrorResponse(lastRequest, error.getLocalizedMessage());
         }
     }
 
@@ -413,7 +578,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
      * @param endPoint sets the last request's that can be used for error handling
      * @param listener sets the event listener for the current request
      */
-    private void prepareForRequest(@EndPoint String endPoint, TriviaRequestListener listener) {
+    private void prepareForRequest(@EndPoint String endPoint, ErrorResponseListener listener) {
         this.lastRequest = endPoint;
         if(listener != this.listener) {
             this.listener = listener;
