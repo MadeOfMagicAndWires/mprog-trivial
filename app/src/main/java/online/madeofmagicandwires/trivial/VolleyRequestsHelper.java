@@ -62,6 +62,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @see #makeRequest(int, String, Map) for using query parameters instead of attaching POST data
      */
     public void makeRequest(int method, Uri url, @Nullable JSONObject data) {
+        Log.d("makeRequest", url.toString());
         try {
             JsonObjectRequest request = new JsonObjectRequest(
                     method,

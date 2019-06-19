@@ -32,55 +32,6 @@ public class TriviaGame {
         String ANY = null;
     }
 
-    /**
-     * Interface implementing the generating or retrieving of new questions for a Trivia game
-     */
-    public interface QuestionsHandler {
-        /**
-         * Generates or Retrieves a set amount of TriviaQuestion objects for a TriviaGame
-         * @param amount the amount of questions to be generated or retrieved
-         * @return the list of questions generated or retrieved
-         */
-        List<TriviaQuestion> retrieveQuestions(int amount);
-    }
-
-    /**
-     * Exception thrown when trying to call a QuestionHandler where none is provided
-     */
-    public static class NoQuestionHandlerProvidedException extends Exception {
-
-        /**
-         * Constructs a new exception with the specified detail message and
-         * cause.  <p>Note that the detail message associated with
-         * {@code cause} is <i>not</i> automatically incorporated in
-         * this exception's detail message.
-         *
-         * @param message the detail message (which is saved for later retrieval
-         *                by the {@link #getMessage()} method).
-         * @param cause   the cause (which is saved for later retrieval by the
-         *                {@link #getCause()} method).  (A <tt>null</tt> value is
-         *                permitted, and indicates that the cause is nonexistent or
-         *                unknown.)
-         * @since 1.4
-         */
-        public NoQuestionHandlerProvidedException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-
-        /**
-         * Constructs a new exception with the specified detail message.  The
-         * cause is not initialized, and may subsequently be initialized by
-         * a call to {@link #initCause}.
-         *
-         * @param message the detail message. The detail message is saved for
-         *                later retrieval by the {@link #getMessage()} method.
-         */
-        public NoQuestionHandlerProvidedException(String message) {
-            super(message);
-        }
-
-    }
 
     private boolean gameOver;
     private int questionAmount;
@@ -88,9 +39,8 @@ public class TriviaGame {
     private List<TriviaQuestion> questions;
     private int score;
     private @Difficulty String gameDifficulty;
-    private Integer gameCategory;
+    private int gameCategory;
     private  @QuestionType String gameQuestionType;
-    private QuestionsHandler questionsHandler;
 
     /**
      * Most precise constructor; sets the amount of questions to be asked as well as their difficulty
@@ -110,7 +60,7 @@ public class TriviaGame {
             int qAmount,
             @Difficulty String qDifficulty,
             @QuestionType String qType,
-            Integer qCategory) {
+            int qCategory) {
         this.questionAmount = qAmount;
         this.gameDifficulty = qDifficulty;
         this.gameCategory = qCategory;
@@ -135,7 +85,7 @@ public class TriviaGame {
      *               set to {@link QuestionType#ANY} for any category
      */
     public TriviaGame(int qAmount, @Difficulty String qDifficulty, @QuestionType String qType) {
-        this(qAmount, qDifficulty, qType, null);
+        this(qAmount, qDifficulty, qType, -1);
     }
 
 
@@ -148,12 +98,8 @@ public class TriviaGame {
      *                when 0 is passed the game will go on forever
      */
     public TriviaGame(int qAmount) {
-        this(qAmount, Difficulty.ANY, QuestionType.ANY, null);
+        this(qAmount, Difficulty.ANY, QuestionType.ANY, -1);
     }
-
-
-
-
 
     /**
      * Alternative constructor
@@ -176,19 +122,50 @@ public class TriviaGame {
      *
      */
     public TriviaGame() {
-        this(0, Difficulty.ANY, QuestionType.ANY, null);
+        this(0, Difficulty.ANY, QuestionType.ANY, -1);
+    }
+
+    /**
+     * Retrieves the nth question of this game
+     *
+     * @param index the index of the question to be retrieved
+     *
+     * @return the TriviaQuestion object saved under the index
+     * @throws IndexOutOfBoundsException when there is no question saved under that index
+     * @throws NullPointerException when the question list has not been generated yet
+     * @see TriviaGame#setQuestions(List) to set the question list for this game
+     *
+     */
+    public TriviaQuestion getQuestion(int index) throws IndexOutOfBoundsException, NullPointerException {
+            return questions.get(index);
     }
 
     /**
      * Retrieves the current question of the game
-     * @return TriviaQuestion object representing the question to be answered next
      *
-     * @throws IndexOutOfBoundsException if the question index is higher
-     * than the total amount of questions to be asked before the game ends
+     * @return TriviaQuestion object representing the question to be answered next
+     * @throws IndexOutOfBoundsException when there is no question saved under that index
+     * @throws NullPointerException when the question list has not been generated yet
+     * @see TriviaGame#setQuestions(List) to set the question list for this game
      */
-    public TriviaQuestion getCurrentQuestion() throws ArrayIndexOutOfBoundsException {
-        return questions.get(questionIndex);
+    public TriviaQuestion getCurrentQuestion() throws IndexOutOfBoundsException, NullPointerException {
+        return getQuestion(questionIndex);
     }
+
+    /**
+     * Sets the questions to be asked; if a question list already exists the new questions will
+     * be added to the current list, rather than the list being completely replaced
+     *
+     * @param newQuestions the list of new questions that has been generated or retrieved
+     */
+    public void setQuestions(List<TriviaQuestion> newQuestions) {
+        if(this.questionIndex != 0 || this.questions == null) {
+            this.questions = newQuestions;
+        } else {
+            this.questions.addAll(newQuestions);
+        }
+    }
+
 
     /**
      * Retrieves the category questions of this game belong to
@@ -275,53 +252,6 @@ public class TriviaGame {
         this.score += score;
     }
 
-    /**
-     * Returns the current question handler, used for getting the questions of this game
-     * @return the QuestionHandler object linked to the current game.
-     * @throws NoQuestionHandlerProvidedException if {@link TriviaGame#questionsHandler} was not set
-     *
-     */
-    public QuestionsHandler getQuestionsHandler() throws NoQuestionHandlerProvidedException {
-        if(this.questionsHandler != null) {
-            return questionsHandler;
-        } else {
-            throw new NoQuestionHandlerProvidedException(
-                    "Could not find a QuestionHandler object linked to this instance. " +
-                    "Make sure a call to TriviaGame.setHandler(QuestionHandler) was made!");
-        }
-
-    }
-
-    /**
-     * Set or update the question handler for this game
-     * @param questionsHandler object implementing the QuestionHandler interface.
-     */
-    public void setQuestionsHandler(QuestionsHandler questionsHandler) {
-        if(questionsHandler != this.questionsHandler) {
-            this.questionsHandler = questionsHandler;
-        }
-    }
-
-    /**
-     * Updates the questions to be asked before the game ends
-     * @throws NoQuestionHandlerProvidedException if {@link TriviaGame#questionsHandler}
-     * was not set before calling this method
-     */
-    public void updateQuestions(int questionAmount) throws NoQuestionHandlerProvidedException {
-        if(questionsHandler != null) {
-            if(questionAmount != 0 || questions == null) {
-                questions = questionsHandler.retrieveQuestions(questionAmount);
-            } else {
-                questions.addAll(questionsHandler.retrieveQuestions(questionAmount));
-            }
-        } else {
-            throw new NoQuestionHandlerProvidedException(
-                    "Could not find a QuestionHandler object linked to this instance. " +
-                            "Make sure a call to TriviaGame.setHandler(QuestionHandler) was made" +
-                            "before attempting this");
-        }
-
-    }
 
     /**
      * Moves the game on to the next question, or if there isn't any, ends the game.

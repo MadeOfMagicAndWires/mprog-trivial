@@ -1,25 +1,30 @@
 package online.madeofmagicandwires.trivial;
 
 import android.support.annotation.Nullable;
+
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.List;
+
 
 public class GameActivity extends AppCompatActivity implements
-        TriviaRequestHelper.SessionTokenResponseListener {
+        TriviaRequestHelper.SessionTokenResponseListener,
+        TriviaRequestHelper.QuestionResponseListener {
+
 
     public interface GameView {
-        void showNextQuestion();
+        void showNextQuestion(TriviaQuestion question);
     }
-
     public static String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
 
 
-    private TriviaRequestHelper request;
+    private TriviaGame game;
 
+    private TriviaRequestHelper request;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,7 +33,7 @@ public class GameActivity extends AppCompatActivity implements
 
         FragmentTransaction changes = getSupportFragmentManager().beginTransaction();
         changes.replace(R.id.game_fragment, GameFragment.newInstance(), GAME_FRAGMENT_TAG);
-        changes.addToBackStack(GAME_FRAGMENT_TAG);
+
         changes.commit();
         getSupportFragmentManager().executePendingTransactions();
 
@@ -42,33 +47,58 @@ public class GameActivity extends AppCompatActivity implements
      * Initiates the TriviaGame and TriviaRequestHelper
      */
     public void initTriviaGame(){
-        request = TriviaRequestHelper.getInstance(getApplicationContext());
+        game = new TriviaGame(10, TriviaGame.Difficulty.ANY, TriviaGame.QuestionType.ANY);
+        request = TriviaRequestHelper.getInstance(getApplicationContext(), game);
         request.requestSessionToken(this);
+    }
+
+    /**
+     * Initiates the game
+     */
+    public void startGame() {
+        Log.d(getClass().getSimpleName(), "Started game!");
+
+        Fragment gameFrag = getSupportFragmentManager().findFragmentById(R.id.game_fragment);
+        if(gameFrag instanceof GameFragment) {
+            ((GameFragment) gameFrag).showNextQuestion(game.getCurrentQuestion());
+        }
+
+    }
+
+
+    /**
+     * called when a TriviaDB session request has been successfully requeste
+     *
+     * @param token the session token retrieved
+     */
+    @Override
+    public void OnRequestTokenResponse(String token) {
+        Log.i(getClass().getName(), "Successfully retrieved session token '" + token + "'");
+        Log.d(getClass().getSimpleName(), "Requesting questions");
+        request.requestQuestions(game.getQuestionAmount(), this);
+    }
+
+    @Override
+    public void OnResetTokenResponse(String token) {
+        Log.i(getClass().getName(), "Successfully reset session token '" + token + "'");
 
     }
 
     /**
-     * Tests showing the placeholder before the content is loaded.
+     * Called when a TriviaDB question request successfully resolved
+     *
+     * @param questions a {@link List} of {@link TriviaQuestion} objects
+     *                  representing the trivia questions that were retrieved from the TriviaDB
+     * @see TriviaRequestHelper#requestQuestions(int, TriviaRequestHelper.QuestionResponseListener)
      */
-    public void testShowNextQuestion() {
-        new Thread(() -> {
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    Fragment frag =  getSupportFragmentManager().findFragmentById(R.id.game_fragment);
-                    if(frag instanceof GameFragment) {
-                        ((GameFragment) frag).showNextQuestion();
-                        Log.d("testShowNext", "showNextQuestion succesfully called");
-                    } else {
-                        Log.e("testShowNext", "GameFragment not Added!");
-                    }
-                }
-            }
-        ).start();
-    }
+    @Override
+    public void OnQuestionsResponse(List<TriviaQuestion> questions) {
+        Log.d(getClass().getSimpleName(), "Resolved question request");
+        game.setQuestions(questions);
 
+        // if the game hasn't started yet, start it
+        startGame();
+    }
 
     /**
      * called when an error occurs during a request to the OpenTrivia API
@@ -79,24 +109,9 @@ public class GameActivity extends AppCompatActivity implements
      */
     @Override
     public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
-        Log.e("GameActivity", "request to " + lastRequest + " failed!");
+        Log.e(getClass().getSimpleName(), "request to " + lastRequest + " failed!");
         if(errorMsg != null) {
-            Log.e("GameActivity", errorMsg);
+            Log.e(getClass().getSimpleName(), errorMsg);
         }
-    }
-
-    /**
-     * called when a TriviaDB session request has been successfully requeste
-     *
-     * @param token the session token retrieved
-     */
-    @Override
-    public void OnRequestTokenResponse(String token) {
-        Log.i("TriviaRequestHelper", "Succesfully retrieved session token '" + token + "'");
-    }
-
-    @Override
-    public void OnResetTokenResponse(String token) {
-
     }
 }

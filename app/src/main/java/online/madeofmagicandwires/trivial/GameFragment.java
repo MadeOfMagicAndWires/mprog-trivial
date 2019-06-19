@@ -2,6 +2,7 @@ package online.madeofmagicandwires.trivial;
 
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,8 +17,7 @@ import android.view.ViewGroup;
  */
 public class GameFragment extends Fragment implements GameActivity.GameView {
 
-    private View root;
-
+    // TODO what to do about GameFragment and GameActivity??
 
     public GameFragment() {
         // Required empty public constructor
@@ -31,8 +31,7 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
      */
 
     public static GameFragment newInstance() {
-        GameFragment fragment = new GameFragment();
-        return fragment;
+        return new GameFragment();
     }
 
     @Override
@@ -41,26 +40,26 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         Log.d("OnCreateView", "onCreateView has been called");
-        root = inflater.inflate(R.layout.fragment_game, container, false);
-        return root;
+         return inflater.inflate(R.layout.fragment_game, container, false);
     }
 
+
+    // TODO: Bind new question
+    // isAdded makes sure getActivity and getView() are always available
+    @SuppressWarnings("ConstantConditions")
     @Override
-    public void showNextQuestion() {
+    public void showNextQuestion(TriviaQuestion question) {
         if(isAdded()) {
             // use runOnUiThread as this might not be called from the main thread.
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    try{
-                        getView().findViewById(R.id.game_fragment_placeholder).setVisibility(View.GONE);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+            getActivity().runOnUiThread(() -> {
+                try{
+                    getView().findViewById(R.id.game_fragment_placeholder).setVisibility(View.GONE);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             });
         } else {

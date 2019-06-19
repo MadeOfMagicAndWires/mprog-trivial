@@ -207,8 +207,10 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
             @NonNull Context appContext,
             TriviaGame game) {
         instance = getInstance(appContext);
-        instance.setCategoryId(game.getGameCategoryId());
-        instance.setDifficulty(game.getGameDifficulty());
+        if(game != null) {
+            instance.setCategoryId(game.getGameCategoryId());
+            instance.setDifficulty(game.getGameDifficulty());
+        }
         return instance;
     }
 
@@ -335,7 +337,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         if(difficulty != null) {
             params.put("difficulty", difficulty);
         }
-        if(category != null && category > 50) {
+        if(category != null && category > 0) {
             params.put("category", category.toString());
         }
 
