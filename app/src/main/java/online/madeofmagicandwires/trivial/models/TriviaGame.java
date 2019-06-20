@@ -1,10 +1,11 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.models;
 
 import android.support.annotation.StringDef;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.IndexOutOfBoundsException;
+import java.lang.NullPointerException;
 import java.util.List;
 
 
@@ -15,7 +16,7 @@ public class TriviaGame {
      */
     @Retention(RetentionPolicy.SOURCE)
     @StringDef({Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD, Difficulty.UNKNOWN})
-    @interface Difficulty {
+    public @interface Difficulty {
         String EASY = "Easy";
         String MEDIUM = "Medium";
         String HARD  = "Hard";
@@ -26,7 +27,7 @@ public class TriviaGame {
 
     @Retention(RetentionPolicy.SOURCE)
     @StringDef({QuestionType.BOOLEAN, QuestionType.MULTIPLE})
-    @interface QuestionType {
+    public @interface QuestionType {
         String MULTIPLE = "multiple";
         String BOOLEAN  = "boolean";
         String ANY = null;

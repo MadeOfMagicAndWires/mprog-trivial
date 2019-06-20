@@ -1,4 +1,4 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.activities;
 
 import android.support.annotation.Nullable;
 
@@ -9,6 +9,12 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.util.List;
+
+import online.madeofmagicandwires.trivial.fragments.GameFragment;
+import online.madeofmagicandwires.trivial.R;
+import online.madeofmagicandwires.trivial.helpers.TriviaRequestHelper;
+import online.madeofmagicandwires.trivial.models.TriviaGame;
+import online.madeofmagicandwires.trivial.models.TriviaQuestion;
 
 
 public class GameActivity extends AppCompatActivity implements

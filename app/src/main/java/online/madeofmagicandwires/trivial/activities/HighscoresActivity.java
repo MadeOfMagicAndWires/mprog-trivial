@@ -1,7 +1,10 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import online.madeofmagicandwires.trivial.fragments.HighscoresFragment;
+import online.madeofmagicandwires.trivial.R;
 
 
 public class HighscoresActivity extends AppCompatActivity {

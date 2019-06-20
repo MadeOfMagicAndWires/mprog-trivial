@@ -1,4 +1,4 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.helpers;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -22,6 +22,11 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import online.madeofmagicandwires.trivial.models.MultipleChoiceQuestion;
+import online.madeofmagicandwires.trivial.models.TriviaGame;
+import online.madeofmagicandwires.trivial.models.TriviaQuestion;
+import online.madeofmagicandwires.trivial.models.TrueFalseQuestion;
 
 /**
  * A Helper class for the making and interpreting requests to the OpenTriviaDB API.
@@ -171,7 +176,8 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     private ErrorResponseListener listener;
     private String sessionToken;
     private Integer category;
-    private @TriviaGame.Difficulty String difficulty;
+    private @TriviaGame.Difficulty
+    String difficulty;
 
     /**
      * Standard constructor

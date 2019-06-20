@@ -5,7 +5,7 @@
     android:id="@+id/highscores"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".HighscoresFragment">
+    tools:context=".fragments.HighscoresFragment">
 
     <TextView
         android:id="@+id/message"

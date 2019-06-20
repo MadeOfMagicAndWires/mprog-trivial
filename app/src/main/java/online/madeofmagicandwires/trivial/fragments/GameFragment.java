@@ -1,4 +1,4 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.fragments;
 
 
 import android.os.Bundle;
@@ -8,6 +8,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import online.madeofmagicandwires.trivial.R;
+import online.madeofmagicandwires.trivial.activities.GameActivity;
+import online.madeofmagicandwires.trivial.models.TriviaQuestion;
 
 
 /**

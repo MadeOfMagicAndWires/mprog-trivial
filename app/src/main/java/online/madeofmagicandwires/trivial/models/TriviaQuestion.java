@@ -1,4 +1,4 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.models;
 
 
 import java.util.List;

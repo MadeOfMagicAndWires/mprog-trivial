@@ -1,13 +1,11 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.helpers;
 
-import android.annotation.TargetApi;
+
 import android.content.Context;
 import android.net.Uri;
-import android.os.Build;
+
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -20,6 +18,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONObject;
 
 import java.util.Map;
+import java.lang.String;
 
 public abstract class VolleyRequestsHelper implements Response.ErrorListener, Response.Listener<JSONObject> {
 
@@ -61,7 +60,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @param data possible data to send along with the request
      * @see #makeRequest(int, String, Map) for using query parameters instead of attaching POST data
      */
-    public void makeRequest(int method, Uri url, @Nullable JSONObject data) {
+    protected void makeRequest(int method, Uri url, @Nullable JSONObject data) {
         Log.d("makeRequest", url.toString());
         try {
             JsonObjectRequest request = new JsonObjectRequest(
@@ -85,7 +84,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @param data possible data to send along with the request
      * @see #makeRequest(int, String, Map) for using query parameters instead of attaching POST data
      */
-    public void makeRequest( int method,  String url, @Nullable JSONObject data) {
+    protected void makeRequest( int method,  String url, @Nullable JSONObject data) {
         Log.d("makeRequest", url);
         try {
             JsonObjectRequest request = new JsonObjectRequest(
@@ -111,7 +110,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @param queryParams the query parameters to attach to the request url
      * @see #makeRequest(int, String, Map) for passing more than one one two query parameters
      */
-    public void makeRequest(int method, String url, String queryParams) {
+    protected void makeRequest(int method, String url, String queryParams) {
         makeRequest(method, url + "?" + queryParams, (JSONObject) null);
     }
 
@@ -123,7 +122,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * @see #makeRequest(int, String, String) to pass query parameters as a string;
      *                                        useful when you've got fewer parameters
      */
-    public void makeRequest(int method, String url, Map<String, String> queryParams) {
+    protected void makeRequest(int method, String url, Map<String, String> queryParams) {
         Uri.Builder queryUri = Uri.parse(url).buildUpon();
         queryParams.forEach(queryUri::appendQueryParameter);
         makeRequest(method, queryUri.build(), null);
@@ -133,7 +132,7 @@ public abstract class VolleyRequestsHelper implements Response.ErrorListener, Re
      * Make a simple GET Volley request
      * @param url the endpoint to send the request to
      */
-    public void makeRequest(String url) {
+    protected void makeRequest(String url) {
         makeRequest(Request.Method.GET, url, (JSONObject) null);
     }
 

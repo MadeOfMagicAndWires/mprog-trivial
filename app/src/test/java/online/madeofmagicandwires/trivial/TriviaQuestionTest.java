@@ -5,6 +5,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import online.madeofmagicandwires.trivial.models.MultipleChoiceQuestion;
+import online.madeofmagicandwires.trivial.models.TriviaGame;
+import online.madeofmagicandwires.trivial.models.TriviaQuestion;
+
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
@@ -35,18 +39,18 @@ public class TriviaQuestionTest {
     public void getQuestionType() {
 
         String[] possibleTypes = {
-                TriviaQuestion.Type.MULTIPLE,
-                TriviaQuestion.Type.BOOLEAN,
-                TriviaQuestion.Type.UNKNOWN};
+                TriviaGame.QuestionType.ANY,
+                TriviaGame.QuestionType.BOOLEAN,
+                TriviaGame.QuestionType.MULTIPLE};
 
         assertThat(
                 "Returned question type was not a valid one!",
                 Arrays.asList(possibleTypes),
                 hasItem(testQuestion.getQuestionType()));
         assertNotEquals(
-                "question type was set to unknown! Should be Multiple choice",
+                "question type was set to any! Should be Multiple choice",
                 testQuestion.getQuestionType(),
-                TriviaQuestion.Type.UNKNOWN);
+                TriviaGame.QuestionType.ANY);
 
 
     }

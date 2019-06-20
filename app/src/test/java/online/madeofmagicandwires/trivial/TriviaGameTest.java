@@ -6,27 +6,31 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import online.madeofmagicandwires.trivial.models.MultipleChoiceQuestion;
+import online.madeofmagicandwires.trivial.models.TriviaGame;
+import online.madeofmagicandwires.trivial.models.TriviaQuestion;
+
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
-public class TriviaGameTest implements TriviaGame.QuestionsHandler {
+public class TriviaGameTest {
 
     public TriviaGame testGame;
     List<TriviaQuestion> testQs;
 
     @Before
     public void setUp() {
-        testGame = new TriviaGame(1, TriviaGame.Difficulty.EASY);
+        testGame = new TriviaGame(1, TriviaGame.Difficulty.EASY, TriviaGame.QuestionType.ANY);
     }
 
 
     @Test
     public void createTriviaGame() {
-        testGame = new TriviaGame(0, TriviaGame.Difficulty.UNKNOWN);
+        testGame = new TriviaGame(0, TriviaGame.Difficulty.UNKNOWN, TriviaGame.QuestionType.ANY);
         assertNotNull(testGame);
         testGame = new TriviaGame(0);
         assertNotNull(testGame);
-        testGame = new TriviaGame(TriviaGame.Difficulty.EASY);
+        testGame = new TriviaGame(TriviaGame.Difficulty.ANY, TriviaGame.QuestionType.ANY, -1);
         assertNotNull(testGame);
         testGame = new TriviaGame();
         assertNotNull(testGame);
@@ -60,79 +64,11 @@ public class TriviaGameTest implements TriviaGame.QuestionsHandler {
                 qIndex < testGame.getQuestionIndex());
     }
 
-    @Test(expected = TriviaGame.NoQuestionHandlerProvidedException.class)
-    public void getQuestionsHandler() throws TriviaGame.NoQuestionHandlerProvidedException {
-        testGame.setQuestionsHandler(this);
-
-        assertEquals(
-                "QuestionHandler was not set or retrieved correctly!",
-                this,
-                testGame.getQuestionsHandler()
-        );
-
-        testGame.setQuestionsHandler(null);
-        testGame.getQuestionsHandler();
-    }
-
-    @Test
-    public void getCurrentQuestion() throws TriviaGame.NoQuestionHandlerProvidedException {
-        testGame.setQuestionsHandler(this);
-        TriviaQuestion testQ = testGame.getCurrentQuestion();
-        System.out.println(testQ.getQuestion());
-        System.out.println(testQ.getRightAnswer());
-        assertEquals(testQ, testQs.get(0));
-    }
-
-    @Test(expected = TriviaGame.NoQuestionHandlerProvidedException.class)
-    public void getCurrentQuestionExceptionThrowing() throws TriviaGame.NoQuestionHandlerProvidedException {
-        testGame.getCurrentQuestion();
-    }
-
-    @Test(expected = TriviaGame.NoQuestionHandlerProvidedException.class)
-    public void updateQuestions() throws TriviaGame.NoQuestionHandlerProvidedException {
-        testGame.setQuestionsHandler(this);
-        testGame.updateQuestions(1);
-        TriviaQuestion testQ = testGame.getCurrentQuestion();
-        testGame.updateQuestions(1);
-        // assertEquals(testQ.getQuestion(), testGame.getCurrentQuestion().getQuestion());
-        assertNotSame(
-                "Questions have not been updated!",
-                testQ,
-                testGame.getCurrentQuestion()
-        );
-
-        testGame.setQuestionsHandler(null);
-        testGame.getQuestionsHandler();
-    }
-
-
     @Test
     public void isGameOver() {
         assertFalse(testGame.isGameOver());
         testGame.nextQuestion();
         assertTrue(testGame.isGameOver());
-    }
-
-
-    /**
-     * Generates or Retrieves a set amount of TriviaQuestion objects for a TriviaGame
-     *
-     * @param amount the amount of questions to be generated or retrieved
-     * @return the list of questions generated or retrieved
-     */
-    @Override
-    public List<TriviaQuestion> retrieveQuestions(int amount) {
-        testQs = new ArrayList<>();
-
-        for(int i=0;i<amount;i++) {
-            MultipleChoiceQuestion q = new MultipleChoiceQuestion(
-                    "How many questions?",
-                    (i+1) + " so far",
-                    new String[] {"wrong", "answers", "will", "fail"});
-            testQs.add(q);
-        }
-
-        return testQs;
     }
 
     @Test

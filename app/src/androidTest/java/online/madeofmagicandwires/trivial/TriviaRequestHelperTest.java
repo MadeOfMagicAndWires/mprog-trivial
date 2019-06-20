@@ -16,6 +16,13 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import online.madeofmagicandwires.trivial.helpers.TriviaRequestHelper;
+import online.madeofmagicandwires.trivial.models.TriviaGame;
+import online.madeofmagicandwires.trivial.models.TriviaQuestion;
+
+import java.lang.InterruptedException;
+import java.lang.Integer;
+
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
@@ -302,7 +309,7 @@ public class TriviaRequestHelperTest {
      * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
      * without category parameter but with a session category set
      *
-     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnQuestionCountResponse(int, int)
+     * @see TriviaRequestHelper.QuestionCountResponseListener#OnQuestionCountResponse(int, int)
      * @throws InterruptedException when a thread is interrupted
      */
     @Test
@@ -348,7 +355,7 @@ public class TriviaRequestHelperTest {
      * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
      * with category parameter but no session difficulty set
      *
-     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnCategoryQuestionCountResponse(int, int)
+     * @see TriviaRequestHelper.QuestionCountResponseListener#OnCategoryQuestionCountResponse(int, int)
      * @throws InterruptedException when a thread is interrupted
      */
     @Test
@@ -395,7 +402,7 @@ public class TriviaRequestHelperTest {
      * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
      * with category parameter and a session difficulty set
      *
-     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnCategoryQuestionCountResponse(int, int)
+     * @see TriviaRequestHelper.QuestionCountResponseListener#OnCategoryQuestionCountResponse(int, int)
      * @throws InterruptedException when a thread is interrupted
      */
     @Test
