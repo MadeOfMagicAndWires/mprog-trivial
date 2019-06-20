@@ -25,32 +25,24 @@ public class GameActivity extends AppCompatActivity implements
     public interface GameView {
         void showNextQuestion(TriviaQuestion question);
     }
-    public static String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
-
 
     private TriviaGame game;
-
     private TriviaRequestHelper request;
+    private GameFragment currentFragment;
+    private boolean startedGame;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
 
-        FragmentTransaction changes = getSupportFragmentManager().beginTransaction();
-        changes.replace(R.id.game_fragment, GameFragment.newInstance(), GAME_FRAGMENT_TAG);
-
-        changes.commit();
-        getSupportFragmentManager().executePendingTransactions();
-
+        OnCreateGameFragment();
         initTriviaGame();
-
-
     }
 
 
     /**
-     * Initiates the TriviaGame and TriviaRequestHelper
+     * Initiates the TriviaGame and TriviaRequestHelper instances
      */
     public void initTriviaGame(){
         game = new TriviaGame(10, TriviaGame.Difficulty.ANY, TriviaGame.QuestionType.ANY);
@@ -58,17 +50,54 @@ public class GameActivity extends AppCompatActivity implements
         request.requestSessionToken(this);
     }
 
+
     /**
-     * Initiates the game
+     * Creates a {@link GameFragment} and adds it to this activity in View {@link R.id#game_fragment}
+     */
+    public void OnCreateGameFragment() {
+        currentFragment = GameFragment.newInstance();
+
+        // replace fragment
+        FragmentTransaction changes = getSupportFragmentManager().beginTransaction();
+        changes.replace(R.id.game_fragment, currentFragment, GameFragment.GAME_FRAGMENT_TAG);
+        changes.commit();
+
+        // make sure changes are committed NOW, not "later".
+        getSupportFragmentManager().executePendingTransactions();
+    }
+
+    /**
+     * Actually start playing the game
      */
     public void startGame() {
-        Log.d(getClass().getSimpleName(), "Started game!");
-
-        Fragment gameFrag = getSupportFragmentManager().findFragmentById(R.id.game_fragment);
-        if(gameFrag instanceof GameFragment) {
-            ((GameFragment) gameFrag).showNextQuestion(game.getCurrentQuestion());
+        if(!startedGame) {
+            // if no fragment is running, add it, then ask the first question
+            Fragment gameFrag = getSupportFragmentManager().findFragmentById(R.id.game_fragment);
+            if(!(gameFrag instanceof GameFragment)) {
+                OnCreateGameFragment();
+                if(currentFragment != null) {
+                    startGame();
+                }
+            } else {
+                ((GameFragment) gameFrag).showNextQuestion(game.getQuestion(0));
+                Log.d(getClass().getSimpleName(), "Started game!");
+                startedGame = true;
+            }
         }
+    }
 
+
+    /**
+     * Called when user has inputted an answer to a question
+     * @param gotRightAnswer true when the user picked the correct answer to the question,
+     *                       false if not
+     */
+    public void OnUserPickedAnswer(boolean gotRightAnswer) {
+        if(gotRightAnswer) {
+            // TODO: do stuff
+        } else {
+            // TODO: do stuff if user picked the wrong answer
+        }
     }
 
 
@@ -79,14 +108,16 @@ public class GameActivity extends AppCompatActivity implements
      */
     @Override
     public void OnRequestTokenResponse(String token) {
-        Log.i(getClass().getName(), "Successfully retrieved session token '" + token + "'");
-        Log.d(getClass().getSimpleName(), "Requesting questions");
+        // token is saved in instance, just log it
+        Log.i(getClass().getSimpleName(), "Successfully retrieved session token '" + token + "'");
+
+        // once we've got a token, request questions
         request.requestQuestions(game.getQuestionAmount(), this);
     }
 
     @Override
     public void OnResetTokenResponse(String token) {
-        Log.i(getClass().getName(), "Successfully reset session token '" + token + "'");
+        Log.i(getClass().getSimpleName(), "Successfully reset session token '" + token + "'");
 
     }
 

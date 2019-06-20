@@ -117,16 +117,20 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
         /**
          * Called when a TriviaDB session token request has been successfully requested
          *
-         * @param token the session token retrieved
-         * @see TriviaRequestHelper#requestSessionToken(SessionTokenResponseListener)
+         * @param token the session token retrieved; is already saved within the helper instance
+         *              so does not necessarily need to be saved
+         * @see TriviaRequestHelper#requestSessionToken(SessionTokenResponseListener) to make a request
+         * @see TriviaRequestHelper#getSessionToken() to retrieve saved token
          */
         void OnRequestTokenResponse(String token);
         /**
          * Called when a TriviaDB session token has been succesfully reset,
          * meaning all previously asked questions can be asked again
          *
-         * @param token the session token that has been reset
-         * @see TriviaRequestHelper#resetSessionToken(SessionTokenResponseListener)
+         * @param token the session token that has been reset; already saved within
+         *              the helper instance; so does not necessarily need to be saved
+         * @see TriviaRequestHelper#resetSessionToken(SessionTokenResponseListener) to make a request
+         * @see TriviaRequestHelper#getSessionToken() to retrieve saved token
          */
         void OnResetTokenResponse(String token);
 

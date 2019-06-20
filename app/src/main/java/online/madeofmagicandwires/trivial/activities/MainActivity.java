@@ -10,8 +10,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import online.madeofmagicandwires.trivial.R;
-import online.madeofmagicandwires.trivial.activities.GameActivity;
-import online.madeofmagicandwires.trivial.activities.HighscoresActivity;
 
 public class MainActivity extends AppCompatActivity {
 

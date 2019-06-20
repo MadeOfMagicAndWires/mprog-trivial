@@ -21,6 +21,8 @@ import online.madeofmagicandwires.trivial.models.TriviaQuestion;
  */
 public class GameFragment extends Fragment implements GameActivity.GameView {
 
+    public static final String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
+
     // TODO what to do about GameFragment and GameActivity??
 
     public GameFragment() {

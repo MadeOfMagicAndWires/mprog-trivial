@@ -263,7 +263,7 @@ public class TriviaRequestHelperTest {
      * Tests {@link TriviaRequestHelper#requestQuestionCount(TriviaRequestHelper.QuestionCountResponseListener, Integer)}
      * with neither a category parameter or a session category set
      *
-     * @see online.madeofmagicandwires.trivial.TriviaRequestHelper.QuestionCountResponseListener#OnQuestionCountResponse(int, int)
+     * @see TriviaRequestHelper.QuestionCountResponseListener#OnQuestionCountResponse(int, int)
      * @throws InterruptedException when thread is interrupted
      */
     @Test
