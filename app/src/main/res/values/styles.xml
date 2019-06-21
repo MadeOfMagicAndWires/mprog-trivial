@@ -17,8 +17,37 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <style name="AppTheme.MaterialButton" parent="Widget.MaterialComponents.Button">
+    <style name="AppTheme.MaterialButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textAppearance">@style/Widget.MaterialComponents.Button</item>
         <item name="android:textSize">18sp</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@android:color/white</item>
+
+        <item name="cornerRadius">50dp</item>
+        <item name="backgroundTint">@color/colorAccent</item>
     </style>
+
+    <style name="AppTheme.MaterialChip" parent="Widget.MaterialComponents.Chip.Entry">
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Caption</item>
+        <item name="chipBackgroundColor">@color/lighter_grey</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:minWidth">50dp</item>
+    </style>
+
+    <style name="AppTheme.QuestionText" >
+        <item name="android:minWidth">400dp</item>
+        <item name="android:minHeight">75dp</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:layout_gravity">center</item>
+
+        <item name="android:textAlignment">center</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Headline4</item>
+
+        <item name="android:background">@drawable/rounded_corner_background</item>
+
+    </style>
+
 
 </resources>

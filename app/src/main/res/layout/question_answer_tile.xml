@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <android.support.design.button.MaterialButton
+        android:id="@+id/answer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        style="@style/AppTheme.MaterialButton"
+        app:cornerRadius="25dp"
+
+        android:minWidth="100dp"
+        android:minHeight="50dp"
+        android:layout_gravity="center_horizontal"
+
+        tools:text="Answer A"/>
+
+</LinearLayout>

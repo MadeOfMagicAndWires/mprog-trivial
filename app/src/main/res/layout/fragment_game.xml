@@ -15,12 +15,14 @@
         android:orientation="vertical"
         android:gravity="center"
         android:visibility="visible"
-        android:background="#fccc">
+        android:background="@android:color/darker_gray"
+
+        tools:visibility="gone">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
 
-            android:textColor="#fff"
+            android:textColor="@android:color/white"
             android:text="@string/game_fragment_placeholder_text" />
 
         <ProgressBar
@@ -29,26 +31,54 @@
 
     </LinearLayout>
 
-
-
-    <TextView
-        android:id="@+id/question_text"
-        android:layout_width="wrap_content"
+    <android.support.design.card.MaterialCardView
+        android:id="@+id/question_text_card"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-
 
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@id/question_text_bottom_guide"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="8dp"
+        android:layout_margin="8dp">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        android:gravity="center_vertical"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
-        android:textAlignment="center"
+            <android.support.design.chip.Chip
+                android:id="@+id/categoryChip"
 
-        tools:text="How much does a woodchop chop?" />
+                android:layout_weight="0.01"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+
+                style="@style/AppTheme.MaterialChip"
+
+                android:checkable="false"
+                app:checkedIconEnabled="false"
+                app:closeIconEnabled="false"
+
+                tools:text="History" />
+
+            <TextView
+                android:id="@+id/question_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_vertical"
+                android:layout_weight="0.9"
+
+                style="@style/AppTheme.QuestionText"
+
+                tools:text="@tools:sample/lorem/random" />
+        </LinearLayout>
+    </android.support.design.card.MaterialCardView>
+
 
     <android.support.constraint.Guideline
         android:id="@+id/question_text_bottom_guide"
@@ -56,7 +86,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
 
-        app:layout_constraintGuide_percent="0.45" />
+        app:layout_constraintGuide_percent="0.55" />
 
 
     <android.support.v7.widget.RecyclerView

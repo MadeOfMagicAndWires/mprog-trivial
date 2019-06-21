@@ -7,6 +7,8 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
 
 import java.util.List;
 
@@ -15,6 +17,8 @@ import online.madeofmagicandwires.trivial.R;
 import online.madeofmagicandwires.trivial.helpers.TriviaRequestHelper;
 import online.madeofmagicandwires.trivial.models.TriviaGame;
 import online.madeofmagicandwires.trivial.models.TriviaQuestion;
+
+
 
 
 public class GameActivity extends AppCompatActivity implements
@@ -31,6 +35,10 @@ public class GameActivity extends AppCompatActivity implements
     private GameFragment currentFragment;
     private boolean startedGame;
 
+    /**
+     * Called when the activity is started
+     * @param savedInstanceState Bundle of data containing objects saved from the previous instance
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

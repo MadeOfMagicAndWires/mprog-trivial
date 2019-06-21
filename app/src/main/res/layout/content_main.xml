@@ -53,9 +53,8 @@
         android:layout_marginBottom="8dp"
         android:backgroundTint="@color/colorAccent"
         android:textColor="#ffff"
-        app:cornerRadius="50dp"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:textAppearance="@style/AppTheme.MaterialButton"
+        style="@style/AppTheme.MaterialButton"
+
 
         app:layout_constraintLeft_toLeftOf="@id/startGame"
         app:layout_constraintRight_toRightOf="@id/startGame"
