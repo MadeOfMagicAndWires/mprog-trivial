@@ -15,7 +15,8 @@
         android:orientation="vertical"
         android:gravity="center"
         android:visibility="visible"
-        android:background="@android:color/darker_gray"
+        android:elevation="99dp"
+        android:background="@color/darker_grey"
 
         tools:visibility="gone">
         <TextView
@@ -40,7 +41,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@id/question_text_bottom_guide"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="8dp">
+        android:layout_margin="8dp"
+        android:layout_marginTop="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"

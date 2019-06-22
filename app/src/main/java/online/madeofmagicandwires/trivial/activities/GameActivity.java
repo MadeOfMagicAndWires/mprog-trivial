@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 
 import java.util.List;
 
@@ -27,7 +26,8 @@ public class GameActivity extends AppCompatActivity implements
 
 
     public interface GameView {
-        void showNextQuestion(TriviaQuestion question);
+        void setQuestion(TriviaQuestion question);
+        TriviaQuestion getQuestion();
     }
 
     private TriviaGame game;
@@ -87,7 +87,7 @@ public class GameActivity extends AppCompatActivity implements
                     startGame();
                 }
             } else {
-                ((GameFragment) gameFrag).showNextQuestion(game.getQuestion(0));
+                ((GameFragment) gameFrag).setQuestion(game.getQuestion(0));
                 Log.d(getClass().getSimpleName(), "Started game!");
                 startedGame = true;
             }
@@ -96,16 +96,107 @@ public class GameActivity extends AppCompatActivity implements
 
 
     /**
+     * Asks the next question to the user, updating the fragment or requesting more
+     * questions as needed
+     */
+    public void askNextQuestion() {
+        // next question is last; either get more or end the game after the next one
+        Log.d(getClass().getSimpleName(), "Question " + (game.getQuestionIndex()+2) + "/" + game.getQuestionAmount());
+
+        // update fragment, requesting more questions as needed
+        try {
+            game.nextQuestion();
+            currentFragment.setQuestion(game.getCurrentQuestion());
+        } catch (IndexOutOfBoundsException e) {
+            // not enough questions retrieved yet, request more
+            currentFragment.togglePlaceholderView(View.VISIBLE);
+            int questionsLeft = (game.getQuestionAmount()-1) - game.getQuestionIndex();
+            // request missing question amount, max amount of 50
+            request.requestQuestions((questionsLeft < 50) ? questionsLeft : 50, this);
+        } catch (NullPointerException e) {
+            currentFragment.togglePlaceholderView(View.VISIBLE);
+            request.requestQuestions(game.getQuestionAmount(), this);
+        }
+    }
+
+    /**
      * Called when user has inputted an answer to a question
      * @param gotRightAnswer true when the user picked the correct answer to the question,
      *                       false if not
      */
     public void OnUserPickedAnswer(boolean gotRightAnswer) {
-        if(gotRightAnswer) {
-            // TODO: do stuff
-        } else {
-            // TODO: do stuff if user picked the wrong answer
+        double score = calculateScore(gotRightAnswer);
+        game.addScore(score);
+
+        // game is in progress
+        if(!game.isGameOver()) {
+            Log.d(getClass().getSimpleName(), "Game is still in progress!");
+
+            // next question is last; either get more or end the game after the next one
+            Log.d(getClass().getSimpleName(), game.getQuestionIndex()+1 + "/" + game.getQuestionAmount());
+            if(game.getQuestionIndex() == game.getQuestionAmount()-2) {
+                // ARCADE MODE; request more questions
+                if(game.getQuestionAmount() == 0) {
+                    currentFragment.togglePlaceholderView(View.VISIBLE);
+                    request.requestQuestions(50, this);
+                }
+                // last question; update game state
+                else {
+                    // set game state to game over
+                    // (game will be ended only after this last question has been answered)
+                    game.setGameOver(true);
+                }
+            }
+
+            // ask the next question
+            askNextQuestion();
         }
+
+        // Game over, close fragment and check for high score
+        else {
+            // TODO: Start HighscoresActivity
+            Log.d(getClass().getSimpleName(), "Game over!");
+            Log.d(getClass().getSimpleName(), "Your score was: " + game.getScore());
+            FragmentTransaction changes = getSupportFragmentManager().beginTransaction();
+            changes.remove(currentFragment);
+            changes.commit();
+        }
+    }
+
+    public double calculateScore(boolean correctAnswer) {
+        double score;
+        // add a score modifier based on difficulty,
+        // rewarding or punishing more/less for higher difficulties
+        // it's therefore more rewarding to answer higher difficulty questions
+        switch (game.getCurrentQuestion().getDifficulty()) {
+            case TriviaGame.Difficulty.EASY:
+                score = (correctAnswer) ? 5 : -5;
+                break;
+            case TriviaGame.Difficulty.MEDIUM:
+                score = (correctAnswer) ? 10 : -2.5;
+                break;
+            case TriviaGame.Difficulty.HARD:
+                score = (correctAnswer) ? 20 : -0.75;
+                break;
+            default:
+                score = 0;
+                break;
+        }
+        //  score is then multiplied by questionIndex if a combo is running to encourage
+        //  it's therefore more rewarding to answer answers correctly consecutively
+        //  and doing so for longer (thus favouring longer games doubly).
+        //  It also increases the risk however since when you break a combo, the combo amount will
+        //  now be multiplied with a negative difficulty modifier.
+        score *= (game.getCombo() > 0) ? game.getCombo() : 1;
+        if(game.hasCombo() && correctAnswer) {
+            game.increaseCombo();
+        } else {
+            if(game.hasCombo()) {
+                game.breakCombo();
+            }
+        }
+
+        return score;
     }
 
 
@@ -142,7 +233,9 @@ public class GameActivity extends AppCompatActivity implements
         game.setQuestions(questions);
 
         // if the game hasn't started yet, start it
-        startGame();
+        if(startedGame) {
+            startGame();
+        }
     }
 
     /**
@@ -158,5 +251,6 @@ public class GameActivity extends AppCompatActivity implements
         if(errorMsg != null) {
             Log.e(getClass().getSimpleName(), errorMsg);
         }
+        // TODO: switch case based on lastRequest
     }
 }

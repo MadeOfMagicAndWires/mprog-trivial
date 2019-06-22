@@ -17,9 +17,9 @@ public class TriviaGame {
     @Retention(RetentionPolicy.SOURCE)
     @StringDef({Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD, Difficulty.UNKNOWN})
     public @interface Difficulty {
-        String EASY = "Easy";
-        String MEDIUM = "Medium";
-        String HARD  = "Hard";
+        String EASY = "easy";
+        String MEDIUM = "medium";
+        String HARD  = "hard";
         String UNKNOWN = "Unknown";
         String ANY = null;
 
@@ -38,10 +38,11 @@ public class TriviaGame {
     private int questionAmount;
     private int questionIndex;
     private List<TriviaQuestion> questions;
-    private int score;
+    private double score;
     private @Difficulty String gameDifficulty;
     private int gameCategory;
     private  @QuestionType String gameQuestionType;
+    private int combo;
 
     /**
      * Most precise constructor; sets the amount of questions to be asked as well as their difficulty
@@ -71,6 +72,7 @@ public class TriviaGame {
         this.score = 0;
         this.questionIndex = 0;
         this.gameOver = false;
+        this.combo = 0;
     }
 
     /**
@@ -233,7 +235,7 @@ public class TriviaGame {
      * Gets the players score this game
      * @return the current score
      */
-    public int getScore() {
+    public double getScore() {
         return score;
     }
 
@@ -241,7 +243,7 @@ public class TriviaGame {
      * Sets or updates the players score
      * @param score the new score to be set
      */
-    public void setScore(int score) {
+    public void setScore(double score) {
         this.score = score;
     }
 
@@ -249,7 +251,7 @@ public class TriviaGame {
      * Increments the score by an amount
      * @param score the amount to be added to the score
      */
-    public void addScore(int score) {
+    public void addScore(double score) {
         this.score += score;
     }
 
@@ -272,4 +274,48 @@ public class TriviaGame {
     public boolean isGameOver() {
         return gameOver;
     }
+
+    /**
+     * Updates the game state
+     * @param gameOver true if the game has ended, false if it is still in progress
+     */
+    public void setGameOver(boolean gameOver) {
+        if(this.gameOver != gameOver) {
+            this.gameOver = gameOver;
+        }
+    }
+
+    /**
+     * Returns whether the user has answered consecutive questions correctly,
+     * which can be used for optional bonus score modifiers by the controller
+     * @return true if a combo has been maintained up until now;
+     *         false if it has been broken or not started
+     */
+    public boolean hasCombo() {
+        return (this.combo > 0);
+    }
+
+    /**
+     * Returns the combo so far
+     * @return the number of questions answered correctly
+     */
+    public int getCombo() {
+        return combo;
+    }
+
+    /**
+     * Updates whether the consecutive amount of questions answered correctly by 1 every call
+     */
+    public void increaseCombo() {
+        this.combo++;
+    }
+
+    /**
+     * Breaks the combo, setting the amount of questions answered correctly consecutively back to 0
+     */
+    public void breakCombo() {
+        this.combo = 0;
+    }
+
+
 }

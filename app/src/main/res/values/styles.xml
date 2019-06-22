@@ -45,7 +45,7 @@
         <item name="android:textAlignment">center</item>
         <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Headline4</item>
 
-        <item name="android:background">@drawable/rounded_corner_background</item>
+        <item name="android:foreground">@drawable/rounded_corner_background</item>
 
     </style>
 

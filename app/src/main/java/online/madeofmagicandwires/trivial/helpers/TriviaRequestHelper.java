@@ -639,7 +639,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
 
                 return new MultipleChoiceQuestion(
                         decodeResponseStr(question.getString("question")),
-                        decodeResponseStr("correct_answer"),
+                        decodeResponseStr(question.getString("correct_answer")),
                         wrongAnswers,
                         question.getString("difficulty"),
                         decodeResponseStr(question.getString("category"))
