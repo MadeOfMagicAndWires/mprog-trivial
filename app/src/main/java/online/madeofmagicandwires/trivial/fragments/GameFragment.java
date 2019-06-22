@@ -35,7 +35,27 @@ import online.madeofmagicandwires.trivial.models.TriviaQuestion;
  * Use the {@link GameFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class GameFragment extends Fragment implements GameActivity.GameView {
+public class GameFragment extends Fragment {
+
+    // TODO: implement forward button/swipe
+
+    public interface OnUserFeedbackListener {
+
+        /**
+         * Called when the user has indicated to move on to the next question,
+         * with or without answering the current one
+         */
+        void OnRequestNextQuestion();
+
+        /**
+         * Called when user has inputted an answer to a question
+         * @param pickedCorrectAnswer true when the user picked the correct answer to the question,
+         *                       false if not
+         */
+        void OnUserPickedAnswer(boolean pickedCorrectAnswer);
+
+
+    }
 
     public static final String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
 
@@ -154,14 +174,12 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
     }
 
     /**
-     * Implementation of the {@link GameActivity.GameView} interface
-     * binding a question's data to the fragment
+     * binds question data to this fragment and removes any placeholder elements
      *
      * @param question the TriviaQuestion instance containing the data to represent
      */
     // isAdded makes sure getActivity and getView() are always available
     @SuppressWarnings("ConstantConditions")
-    @Override
     public void setQuestion(TriviaQuestion question) {
         if(isAdded()) {
             getActivity().runOnUiThread(() -> {
@@ -175,10 +193,9 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
 
 
     /**
-     * Returns the TriviaQuestion of this fragment
+     * Returns the TriviaQuestion linked to this fragment
      * @return the triviaquestion instance whose data is being represented by this fragment
      */
-    @Override
     public TriviaQuestion getQuestion() {
         return this.question;
     }
@@ -195,8 +212,10 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
         if(question != null) {
             boolean pickedCorrectAnswer;
             if(question instanceof MultipleChoiceQuestion) {
+                question.setPickedAnswer(answer);
                 pickedCorrectAnswer = question.checkAnswer(answer);
             } else {
+                question.setPickedAnswer(Boolean.valueOf((String) answer));
                 pickedCorrectAnswer = question.checkAnswer(Boolean.valueOf((String) answer));
             }
 
@@ -205,9 +224,9 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
             // as it might move on to the next question
             String correctAnswer = question.getRightAnswer();
 
-            // then pass on the result to GameActivity, which will handle the actual game actions
-            if(isAdded() && getActivity() instanceof GameActivity) {
-                ((GameActivity) getActivity()).OnUserPickedAnswer(pickedCorrectAnswer);
+            // then pass on the result to FeedbackListener, which will handle the actual game actions
+            if(isAdded() && getActivity() instanceof OnUserFeedbackListener) {
+                ((OnUserFeedbackListener) getActivity()).OnUserPickedAnswer(pickedCorrectAnswer);
             }
 
             // either way, show Snackbar
@@ -220,6 +239,18 @@ public class GameFragment extends Fragment implements GameActivity.GameView {
             if(isAdded()) {
                 Snackbar sb = Snackbar.make(getView(), msg, Snackbar.LENGTH_LONG);
                 sb.show();
+            }
+        }
+    }
+
+    /**
+     * Let's the controller know to show the next question
+     */
+    @SuppressWarnings("ConstantConditions")
+    public void requestNextQuestion() {
+        if(isAdded()) {
+            if(getActivity() instanceof OnUserFeedbackListener) {
+                ((OnUserFeedbackListener) getActivity()).OnRequestNextQuestion();
             }
         }
     }

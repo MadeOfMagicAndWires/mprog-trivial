@@ -9,6 +9,8 @@ import online.madeofmagicandwires.trivial.R;
 
 public class HighscoresActivity extends AppCompatActivity {
 
+    public static final String HIGHSCORE_INTENT_SCORE_TAG = "score";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

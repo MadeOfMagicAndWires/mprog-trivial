@@ -12,7 +12,7 @@ abstract public class TriviaQuestion {
     private String question;
     private @TriviaGame.Difficulty String difficulty;
     private String category;
-
+    private boolean answered;
 
     /**
      * Most verbose constructor, sets the difficulty and category of the question
@@ -28,6 +28,9 @@ abstract public class TriviaQuestion {
         this.question = question;
         this.difficulty = difficulty;
         this.category = category;
+
+        // set this automatically
+        this.answered = false;
     }
 
     /**
@@ -94,6 +97,10 @@ abstract public class TriviaQuestion {
      */
     public abstract  <T extends Comparable> boolean checkAnswer(T answer);
 
+    public <T extends Comparable> void pickAnswer(T answer) {
+
+    }
+
     /**
      * Shows the correct answer
      * @return String containing the right answer to the question
@@ -106,4 +113,15 @@ abstract public class TriviaQuestion {
      * @return a list of human-readable possible answers to the question
      */
     abstract public List<String> getAnswers();
+
+    /**
+     * returns whether this question has already been answered once
+     * @return true if the question has already been answered, false if not
+     */
+    abstract public boolean isAnswered();
+    /**
+     * Saves the value of a picked answer to a question
+     * @param answer the picked answer to remember
+     */
+    abstract public  <T extends Comparable> void setPickedAnswer(T answer);
 }

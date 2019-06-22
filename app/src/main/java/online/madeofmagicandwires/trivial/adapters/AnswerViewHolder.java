@@ -31,9 +31,10 @@ public class AnswerViewHolder extends RecyclerView.ViewHolder implements View.On
     }
 
     /**
-     * Called when a view has been clicked.
+     * Called when an answer viewholder has been clicked and lets the parent fragment know
+     * of this interaction.
      *
-     * @param v The view that was clicked.
+     * @param v the answer viewholder that has been clicked
      */
     @Override
     public void onClick(View v) {
@@ -42,9 +43,14 @@ public class AnswerViewHolder extends RecyclerView.ViewHolder implements View.On
             String answer = (String) answerBtn.getTag(R.id.answer_holder_tag);
             // get the chosen answer from the tag
             if(answer != null) {
-                // if fragment and fragment question are available, notify the fragment
+                // if fragment is available either answer the question if it is not answered already,
+                // or unceremoniously move on to the next question
                 if(fragment != null) {
-                    fragment.userPickedAnswer(answer);
+                    if(!fragment.getQuestion().isAnswered()) {
+                        fragment.userPickedAnswer(answer);
+                    } else {
+                        fragment.requestNextQuestion();
+                    }
                 }
             }
 
@@ -54,6 +60,10 @@ public class AnswerViewHolder extends RecyclerView.ViewHolder implements View.On
 
     }
 
+    /**
+     * Sets the text of the MaterialButton representing the answer, capitalizing the first letter
+     * @param text
+     */
     public void setText(String text) {
         text = capitaliseString(text);
         if(itemView.findViewById(R.id.answer) != null) {
@@ -61,6 +71,11 @@ public class AnswerViewHolder extends RecyclerView.ViewHolder implements View.On
         }
     }
 
+    /**
+     * Capitalizes the first letter of a string
+     * @param text the string in all lowercaps
+     * @return string containing the same data as was input, but now the first letter is capitalized
+     */
     private static String capitaliseString(String text) {
         if(text != null && text.length() != 0) {
             String initialChar = text.substring(0,1).toUpperCase();
@@ -69,18 +84,30 @@ public class AnswerViewHolder extends RecyclerView.ViewHolder implements View.On
         return text;
     }
 
+    /**
+     * Sets the click listener of the MaterialButton representing the answer
+     */
     public void setClickListener() {
         if(itemView.findViewById(R.id.answer) != null) {
             itemView.findViewById(R.id.answer).setOnClickListener(this);
         }
     }
 
+    /**
+     * Sets the tag of the MaterialButton representing the answer
+     * @param tag the object to link to the answer view
+     */
     public void setTag(Object tag) {
         if(itemView.findViewById(R.id.answer) != null) {
             itemView.findViewById(R.id.answer).setTag(tag);
         }
     }
 
+    /**
+     * Sets the tag of the MaterialButton representing the answer, under a specific key
+     * @param key the specific key to save the tag object under
+     * @param value the specific object to link to the answer view
+     */
     public void setTag(int key, Object value) {
         if(itemView.findViewById(R.id.answer) != null) {
             itemView.findViewById(R.id.answer).setTag(key, value);

@@ -232,6 +232,15 @@ public class TriviaGame {
     }
 
     /**
+     * updates the index keeping track of which question we are at now
+     * @param index the amount of questions already asked, including the current one,
+     *              if it has not been answered already
+     */
+    public void setQuestionIndex(int index) {
+        this.questionIndex = index;
+    }
+
+    /**
      * Gets the players score this game
      * @return the current score
      */

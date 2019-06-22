@@ -1,5 +1,6 @@
 package online.madeofmagicandwires.trivial.activities;
 
+import android.content.Intent;
 import android.support.annotation.Nullable;
 
 import android.support.v4.app.Fragment;
@@ -21,14 +22,9 @@ import online.madeofmagicandwires.trivial.models.TriviaQuestion;
 
 
 public class GameActivity extends AppCompatActivity implements
+        GameFragment.OnUserFeedbackListener,
         TriviaRequestHelper.SessionTokenResponseListener,
         TriviaRequestHelper.QuestionResponseListener {
-
-
-    public interface GameView {
-        void setQuestion(TriviaQuestion question);
-        TriviaQuestion getQuestion();
-    }
 
     private TriviaGame game;
     private TriviaRequestHelper request;
@@ -119,21 +115,23 @@ public class GameActivity extends AppCompatActivity implements
         }
     }
 
+    @Override
+    public void OnRequestNextQuestion() {
+        askNextQuestion();
+    }
+
     /**
      * Called when user has inputted an answer to a question
      * @param gotRightAnswer true when the user picked the correct answer to the question,
      *                       false if not
      */
+    @Override
     public void OnUserPickedAnswer(boolean gotRightAnswer) {
         double score = calculateScore(gotRightAnswer);
         game.addScore(score);
 
         // game is in progress
         if(!game.isGameOver()) {
-            Log.d(getClass().getSimpleName(), "Game is still in progress!");
-
-            // next question is last; either get more or end the game after the next one
-            Log.d(getClass().getSimpleName(), game.getQuestionIndex()+1 + "/" + game.getQuestionAmount());
             if(game.getQuestionIndex() == game.getQuestionAmount()-2) {
                 // ARCADE MODE; request more questions
                 if(game.getQuestionAmount() == 0) {
@@ -152,14 +150,11 @@ public class GameActivity extends AppCompatActivity implements
             askNextQuestion();
         }
 
-        // Game over, close fragment and check for high score
+        // Game over, close fragment and open highscore activity
         else {
-            // TODO: Start HighscoresActivity
-            Log.d(getClass().getSimpleName(), "Game over!");
-            Log.d(getClass().getSimpleName(), "Your score was: " + game.getScore());
-            FragmentTransaction changes = getSupportFragmentManager().beginTransaction();
-            changes.remove(currentFragment);
-            changes.commit();
+            Intent intent = new Intent(this, HighscoresActivity.class);
+            intent.putExtra(HighscoresActivity.HIGHSCORE_INTENT_SCORE_TAG, game.getScore());
+            startActivity(intent);
         }
     }
 
@@ -233,7 +228,7 @@ public class GameActivity extends AppCompatActivity implements
         game.setQuestions(questions);
 
         // if the game hasn't started yet, start it
-        if(startedGame) {
+        if(!startedGame) {
             startGame();
         }
     }
@@ -252,5 +247,21 @@ public class GameActivity extends AppCompatActivity implements
             Log.e(getClass().getSimpleName(), errorMsg);
         }
         // TODO: switch case based on lastRequest
+    }
+
+    /**
+     * Shows the previous question when user navigates back;
+     * or closes the application when on the first question
+     */
+    @Override
+    public void onBackPressed() {
+        if(startedGame && game != null && game.getQuestionIndex() != 0) {
+            if(currentFragment != null) {
+                game.setQuestionIndex(game.getQuestionIndex()-1);
+                currentFragment.setQuestion(game.getCurrentQuestion());
+            }
+        } else {
+            super.onBackPressed();
+        }
     }
 }

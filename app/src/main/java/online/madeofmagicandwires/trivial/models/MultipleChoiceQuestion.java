@@ -12,6 +12,7 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
 
     private String rightAnswer;
     private String[] wrongAnswers;
+    private String pickedAnswer;
 
 
     /**
@@ -84,6 +85,31 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
     }
 
     /**
+     * returns whether this question has already been answered once
+     *
+     * @return true if the question has already been answered, false if not
+     */
+    @Override
+    public boolean isAnswered() {
+        return (pickedAnswer != null);
+    }
+
+    /**
+     * Saves the value of a picked answer to a question
+     *
+     * @param answer the picked answer to remember
+     */
+    @Override
+    public <T extends Comparable> void setPickedAnswer(T answer) {
+        if(answer instanceof String) {
+            this.pickedAnswer = (String) answer;
+        } else {
+            this.pickedAnswer = null;
+        }
+
+    }
+
+    /**
      * Shows the correct answer
      *
      * @return String containing the right answer to the question
@@ -103,4 +129,6 @@ public class MultipleChoiceQuestion extends TriviaQuestion {
     public <T extends Comparable> boolean checkAnswer(T answer) {
         return answer.equals(rightAnswer);
     }
+
+
 }

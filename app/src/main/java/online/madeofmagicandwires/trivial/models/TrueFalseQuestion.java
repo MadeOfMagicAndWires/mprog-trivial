@@ -7,6 +7,7 @@ import java.util.List;
 public class TrueFalseQuestion extends TriviaQuestion {
 
     private boolean correctAnswer;
+    private Boolean pickedAnswer;
 
     /**
      * Most verbose constructor, sets the difficulty and category of the question
@@ -76,5 +77,29 @@ public class TrueFalseQuestion extends TriviaQuestion {
         choices.add(Boolean.toString(!correctAnswer));
         Collections.shuffle(choices);
         return choices;
+    }
+
+    /**
+     * returns whether this question has already been answered once
+     *
+     * @return true if the question has already been answered, false if not
+     */
+    @Override
+    public boolean isAnswered() {
+        return (pickedAnswer != null);
+    }
+
+    /**
+     * Saves the value of a picked answer to a question
+     *
+     * @param answer the picked answer to remember
+     */
+    @Override
+    public <T extends Comparable> void setPickedAnswer(T answer) {
+        if(answer instanceof Boolean) {
+            this.pickedAnswer = (Boolean) answer;
+        } else {
+            this.pickedAnswer = null;
+        }
     }
 }
