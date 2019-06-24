@@ -161,7 +161,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
             EndPoint.CATEGORY_COUNT, // requesting the total amount of questions in a category
             EndPoint.COUNT           // requesting the total amount of questions in the database
     })
-    @interface EndPoint {
+    public @interface EndPoint {
 
 
         String SESSION = "api_token.php";

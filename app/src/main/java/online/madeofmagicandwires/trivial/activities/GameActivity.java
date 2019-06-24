@@ -247,6 +247,16 @@ public class GameActivity extends AppCompatActivity implements
             Log.e(getClass().getSimpleName(), errorMsg);
         }
         // TODO: switch case based on lastRequest
+        switch (lastRequest) {
+            case TriviaRequestHelper.EndPoint.TRIVIA:
+                // something went wrong!
+                // TODO: properly convey the error to the user.
+                if(!startedGame) {
+                    FragmentTransaction changes = getSupportFragmentManager().beginTransaction();
+                    changes.remove(currentFragment);
+                    changes.commit();
+                }
+        }
     }
 
     /**

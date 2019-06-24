@@ -26,6 +26,7 @@ import online.madeofmagicandwires.trivial.R;
 import online.madeofmagicandwires.trivial.activities.GameActivity;
 import online.madeofmagicandwires.trivial.adapters.AnswerViewHolder;
 import online.madeofmagicandwires.trivial.adapters.AnswersAdapter;
+import online.madeofmagicandwires.trivial.listeners.GameOnTouchListener;
 import online.madeofmagicandwires.trivial.models.MultipleChoiceQuestion;
 import online.madeofmagicandwires.trivial.models.TriviaQuestion;
 
@@ -60,6 +61,7 @@ public class GameFragment extends Fragment {
     public static final String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
 
     private TriviaQuestion question;
+    private GameOnTouchListener touchListener;
 
     public GameFragment() {
         // Required empty public constructor
@@ -94,6 +96,7 @@ public class GameFragment extends Fragment {
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         );
+
         return root;
     }
 
@@ -121,6 +124,7 @@ public class GameFragment extends Fragment {
                     category.setChipBackgroundColor(
                             getActivity().getColorStateList(R.color.lighter_grey));
                     category.setText(null);
+                    getView().setOnTouchListener(null);
                 }
             } catch (NullPointerException e) {
                 Log.e(getClass().getSimpleName(), "Could not find root fragment view");
@@ -142,6 +146,12 @@ public class GameFragment extends Fragment {
 
             categoryView.setText(question.getCategory());
             questionView.setText(question.getQuestion());
+
+            if(touchListener == null) {
+                touchListener = new GameOnTouchListener(this);
+            }
+            getView().findViewById(R.id.question_text_card).setOnTouchListener(touchListener);
+            Log.d(getClass().getSimpleName(), "Added listener " + touchListener.toString());
 
 
             if(answersContainer != null) {
@@ -252,6 +262,22 @@ public class GameFragment extends Fragment {
             if(getActivity() instanceof OnUserFeedbackListener) {
                 ((OnUserFeedbackListener) getActivity()).OnRequestNextQuestion();
             }
+        }
+    }
+
+    /**
+     * Called when the fragment has been resumed from a previous state; enables fullscreen
+     */
+    @Override
+    @SuppressWarnings("ConstantConditions")
+    public void onResume() {
+        super.onResume();
+        if(isAdded()) {
+            getView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            );
         }
     }
 }
