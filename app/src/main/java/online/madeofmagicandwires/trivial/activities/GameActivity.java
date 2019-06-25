@@ -1,13 +1,18 @@
 package online.madeofmagicandwires.trivial.activities;
 
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.List;
@@ -15,6 +20,7 @@ import java.util.List;
 import online.madeofmagicandwires.trivial.fragments.GameFragment;
 import online.madeofmagicandwires.trivial.R;
 import online.madeofmagicandwires.trivial.helpers.TriviaRequestHelper;
+import online.madeofmagicandwires.trivial.listeners.SwipeGestureListener;
 import online.madeofmagicandwires.trivial.models.TriviaGame;
 import online.madeofmagicandwires.trivial.models.TriviaQuestion;
 
@@ -26,10 +32,51 @@ public class GameActivity extends AppCompatActivity implements
         TriviaRequestHelper.SessionTokenResponseListener,
         TriviaRequestHelper.QuestionResponseListener {
 
+
+    // TODO: implement forward button/swipe
+    private static class GameSwipeGestureListener extends SwipeGestureListener {
+
+        private GameActivity activity;
+
+        /**
+         * Standard constructor
+         * @param activity the activity handling the game
+         */
+        public GameSwipeGestureListener(@NonNull GameActivity activity) {
+            this.activity = activity;
+        }
+
+        @Override
+        public void OnSwipeLeftEvent() {
+            Log.d(getClass().getSimpleName(), "Swipe left!");
+            activity.askNextQuestion();
+        }
+
+        @Override
+        public void OnSwipeRightEvent() {
+            Log.d(getClass().getSimpleName(), "Swipe right!");
+            activity.showPreviousQuestion();
+
+        }
+
+        @Override
+        public void OnSwipeUpEvent() {
+            // do nothing
+        }
+
+        @Override
+        public void OnSwipeDownEvent() {
+            // do nothing
+        }
+    }
+
+
     private TriviaGame game;
     private TriviaRequestHelper request;
     private GameFragment currentFragment;
     private boolean startedGame;
+
+    private GestureDetectorCompat swipeDetector;
 
     /**
      * Called when the activity is started
@@ -42,6 +89,8 @@ public class GameActivity extends AppCompatActivity implements
 
         OnCreateGameFragment();
         initTriviaGame();
+        swipeDetector = new GestureDetectorCompat(getApplicationContext(),
+                new GameSwipeGestureListener(this));
     }
 
 
@@ -95,23 +144,57 @@ public class GameActivity extends AppCompatActivity implements
      * Asks the next question to the user, updating the fragment or requesting more
      * questions as needed
      */
+    @SuppressWarnings("ConstantConditions")
     public void askNextQuestion() {
         // next question is last; either get more or end the game after the next one
         Log.d(getClass().getSimpleName(), "Question " + (game.getQuestionIndex()+2) + "/" + game.getQuestionAmount());
 
         // update fragment, requesting more questions as needed
-        try {
-            game.nextQuestion();
-            currentFragment.setQuestion(game.getCurrentQuestion());
-        } catch (IndexOutOfBoundsException e) {
-            // not enough questions retrieved yet, request more
-            currentFragment.togglePlaceholderView(View.VISIBLE);
-            int questionsLeft = (game.getQuestionAmount()-1) - game.getQuestionIndex();
-            // request missing question amount, max amount of 50
-            request.requestQuestions((questionsLeft < 50) ? questionsLeft : 50, this);
-        } catch (NullPointerException e) {
-            currentFragment.togglePlaceholderView(View.VISIBLE);
-            request.requestQuestions(game.getQuestionAmount(), this);
+        if(game != null && currentFragment != null) {
+            try {
+                game.nextQuestion();
+                currentFragment.setQuestion(game.getCurrentQuestion());
+            } catch (IndexOutOfBoundsException e) {
+                // not enough questions retrieved yet, request more
+                if(game.getQuestionIndex() != game.getQuestionAmount()) {
+                    currentFragment.togglePlaceholderView(View.VISIBLE);
+                    int questionsLeft = (game.getQuestionAmount()) - game.getQuestionIndex();
+                    // request missing question amount, max amount of 50
+                    request.requestQuestions((questionsLeft < 50) ? questionsLeft : 50, this);
+                } else {
+                    if(currentFragment.isAdded()) {
+                        Snackbar sb = Snackbar.make(currentFragment.getView(),
+                                R.string.no_next_question_error_msg, Snackbar.LENGTH_LONG);
+                        sb.show();
+                    }
+                    Log.w(getClass().getSimpleName(), getString(R.string.no_next_question_error_msg));
+                }
+            } catch (NullPointerException e) {
+                currentFragment.togglePlaceholderView(View.VISIBLE);
+                request.requestQuestions(game.getQuestionAmount(), this);
+            }
+        }
+    }
+
+    /**
+     * Displays the previous question in the current GameFragment
+     */
+    public void showPreviousQuestion() {
+        // TODO: add transition
+        if(startedGame && game != null && currentFragment != null) {
+            if(game.getQuestionIndex() != 0) {
+                game.setQuestionIndex(game.getQuestionIndex()-1);
+                currentFragment.setQuestion(game.getCurrentQuestion());
+            } else {
+                if(currentFragment != null && currentFragment.getView() != null) {
+                    Snackbar sb = Snackbar.make(
+                            currentFragment.getView(),
+                            R.string.no_prev_question_error_msg,
+                            Snackbar.LENGTH_LONG);
+                    sb.show();
+                }
+                Log.w(getClass().getSimpleName(), getString(R.string.no_prev_question_error_msg));
+            }
         }
     }
 
@@ -256,6 +339,8 @@ public class GameActivity extends AppCompatActivity implements
                     changes.remove(currentFragment);
                     changes.commit();
                 }
+                default:
+                    Log.e(lastRequest, errorMsg);
         }
     }
 
@@ -265,13 +350,25 @@ public class GameActivity extends AppCompatActivity implements
      */
     @Override
     public void onBackPressed() {
-        if(startedGame && game != null && game.getQuestionIndex() != 0) {
-            if(currentFragment != null) {
-                game.setQuestionIndex(game.getQuestionIndex()-1);
-                currentFragment.setQuestion(game.getCurrentQuestion());
-            }
+        if(game.getQuestionIndex() != 0) {
+            showPreviousQuestion();
         } else {
             super.onBackPressed();
         }
+    }
+
+    /**
+     * Called when a touch screen event was not handled by any of the views
+     * under it.  This is most useful to process touch events that happen
+     * outside of your window bounds, where there is no view to receive it.
+     *
+     * @param event The touch screen event being processed.
+     * @return Return true if you have consumed the event, false if you haven't.
+     * The default implementation always returns false.
+     */
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        this.swipeDetector.onTouchEvent(event);
+        return super.onTouchEvent(event);
     }
 }

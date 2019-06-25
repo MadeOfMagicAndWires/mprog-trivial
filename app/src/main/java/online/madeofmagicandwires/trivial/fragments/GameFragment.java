@@ -1,7 +1,6 @@
 package online.madeofmagicandwires.trivial.fragments;
 
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.chip.Chip;
@@ -11,22 +10,14 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import online.madeofmagicandwires.trivial.R;
-import online.madeofmagicandwires.trivial.activities.GameActivity;
-import online.madeofmagicandwires.trivial.adapters.AnswerViewHolder;
 import online.madeofmagicandwires.trivial.adapters.AnswersAdapter;
-import online.madeofmagicandwires.trivial.listeners.GameOnTouchListener;
+import online.madeofmagicandwires.trivial.listeners.SwipeGestureListener;
 import online.madeofmagicandwires.trivial.models.MultipleChoiceQuestion;
 import online.madeofmagicandwires.trivial.models.TriviaQuestion;
 
@@ -37,8 +28,6 @@ import online.madeofmagicandwires.trivial.models.TriviaQuestion;
  * create an instance of this fragment.
  */
 public class GameFragment extends Fragment {
-
-    // TODO: implement forward button/swipe
 
     public interface OnUserFeedbackListener {
 
@@ -61,7 +50,6 @@ public class GameFragment extends Fragment {
     public static final String GAME_FRAGMENT_TAG = "GAME_FRAGMENT";
 
     private TriviaQuestion question;
-    private GameOnTouchListener touchListener;
 
     public GameFragment() {
         // Required empty public constructor
@@ -124,7 +112,6 @@ public class GameFragment extends Fragment {
                     category.setChipBackgroundColor(
                             getActivity().getColorStateList(R.color.lighter_grey));
                     category.setText(null);
-                    getView().setOnTouchListener(null);
                 }
             } catch (NullPointerException e) {
                 Log.e(getClass().getSimpleName(), "Could not find root fragment view");
@@ -146,13 +133,6 @@ public class GameFragment extends Fragment {
 
             categoryView.setText(question.getCategory());
             questionView.setText(question.getQuestion());
-
-            if(touchListener == null) {
-                touchListener = new GameOnTouchListener(this);
-            }
-            getView().findViewById(R.id.question_text_card).setOnTouchListener(touchListener);
-            Log.d(getClass().getSimpleName(), "Added listener " + touchListener.toString());
-
 
             if(answersContainer != null) {
                 // use grid layout for multiple choice, or linear for 'true or false'
@@ -256,7 +236,6 @@ public class GameFragment extends Fragment {
     /**
      * Let's the controller know to show the next question
      */
-    @SuppressWarnings("ConstantConditions")
     public void requestNextQuestion() {
         if(isAdded()) {
             if(getActivity() instanceof OnUserFeedbackListener) {

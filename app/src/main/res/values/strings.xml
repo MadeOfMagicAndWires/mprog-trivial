@@ -8,4 +8,6 @@
 
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="game_fragment_placeholder_text">Please wait&#8230;</string>
+    <string name="no_prev_question_error_msg">You are at the start of the game!</string>
+    <string name="no_next_question_error_msg">You have reached the last question!</string>
 </resources>
