@@ -325,7 +325,7 @@ public class GameActivity extends AppCompatActivity implements
      */
     @Override
     public void OnErrorResponse(String lastRequest, @Nullable String errorMsg) {
-        Log.e(getClass().getSimpleName(), "request to " + lastRequest + " failed!");
+        Log.e(getClass().getSimpleName(), "request to '" + lastRequest + "' failed!");
         if(errorMsg != null) {
             Log.e(getClass().getSimpleName(), errorMsg);
         }
@@ -339,8 +339,9 @@ public class GameActivity extends AppCompatActivity implements
                     changes.remove(currentFragment);
                     changes.commit();
                 }
+                break;
                 default:
-                    Log.e(lastRequest, errorMsg);
+                    break;
         }
     }
 
