@@ -6,23 +6,31 @@ import java.util.Objects;
 
 /**
  * Container class of a single item from a HighscoreList.
- * contains the score, position, and associated name of a score
+ * contains the score, id, and associated name of a score
  */
 class Score {
     private int score;
-    private int position;
+    private final int id;
     private String name;
 
     /**
      * Constructor of this object
      * @param score the numerical value of this score
-     * @param position the position of this score in the highscore list
+     * @param id the id of this score in the highscore list
      * @param name the name of the user who obtained this score
      */
-    public Score(int score, int position, @NonNull String name) {
+    public Score(int score, int id, @NonNull String name) {
         this.score = score;
-        this.position = position;
+        this.id = id;
         this.name = name;
+    }
+
+    /**
+     * Returns the id of this score
+     * @return the id of this score in the highscore list
+     */
+    public int getId() {
+        return id;
     }
 
     /**
@@ -34,11 +42,11 @@ class Score {
     }
 
     /**
-     * Returns the position of this score
-     * @return the position of this score in the highscore list
+     * Sets the score of this item
+     * @param score a numerical value representing how well a user did
      */
-    public int getPosition() {
-        return position;
+    public void setScore(int score) {
+        this.score = score;
     }
 
     /**
@@ -47,6 +55,14 @@ class Score {
      */
     public @NonNull String getName() {
         return name;
+    }
+
+    /**
+     * Sets the name of the user who obtained this score
+     * @param name the name associated with this score
+     */
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
@@ -60,7 +76,7 @@ class Score {
         if (o == null || getClass() != o.getClass()) return false;
         Score score1 = (Score) o;
         return getScore() == score1.getScore() &&
-                getPosition() == score1.getPosition() &&
+                getId() == score1.getId() &&
                 getName().equals(score1.getName());
     }
 
@@ -70,7 +86,7 @@ class Score {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(getScore(), getPosition(), getName());
+        return Objects.hash(getScore(), getId(), getName());
     }
 
     /**
@@ -80,6 +96,6 @@ class Score {
     @Override
     @NonNull
     public String toString() {
-      return "(" + getPosition() + ") " + getScore() + ": " + getName();
+      return "(" + getId() + ") " + getScore() + ": " + getName();
     }
 }

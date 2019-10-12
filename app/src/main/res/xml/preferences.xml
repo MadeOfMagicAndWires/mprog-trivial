@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/highscores_api_settings_category"/>
+    <Preference
+        android:key="@string/highscore_api_url_pref_key"
+        android:title="Highscore API Server"
+        android:summary="The REST API Server to synchronise scores with"
+        android:defaultValue="@string/default_highscores_api_url"
+        />
+    <Preference
+        android:key="@string/highscore_api_port_pref_key"
+        android:title="Highscore API Server port"
+        android:summary="the port to access the REST API server to synchronise scores with"
+        android:defaultValue="@integer/default_highscores_api_port"/>
+
+    <PreferenceCategory/>
+
+</PreferenceScreen>

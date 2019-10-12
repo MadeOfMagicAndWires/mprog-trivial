@@ -12,15 +12,35 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Map;
 import java.lang.String;
 
+
+/**
+ * Helper class for the making of requests using the Volley library
+ *
+ * TODO: make generic and factory classes
+ */
 public abstract class VolleyRequestsHelper implements Response.ErrorListener, Response.Listener<JSONObject> {
+
+    /**
+     * Listener interface superclass for responding to requests made by the TriviaRequestHelper class
+     * Only handles the response errors and is not to be implemented directly
+     */
+    protected interface ErrorResponseListener {
+        /**
+         * called when an error occurs during a request to the OpenTrivia API
+         * @param errorMsg the error message included.
+         */
+        void OnErrorResponse(@Nullable String errorMsg);
+    }
 
 
     /** context to be used by Volley **/

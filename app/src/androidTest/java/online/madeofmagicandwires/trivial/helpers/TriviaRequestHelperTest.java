@@ -1,9 +1,9 @@
-package online.madeofmagicandwires.trivial;
+package online.madeofmagicandwires.trivial.helpers;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
+import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 import android.util.SparseArray;
@@ -26,7 +26,7 @@ import java.lang.Integer;
 import static org.junit.Assert.*;
 
 @RunWith(AndroidJUnit4.class)
-@SmallTest
+@MediumTest
 public class TriviaRequestHelperTest {
 
     private Context appContext;

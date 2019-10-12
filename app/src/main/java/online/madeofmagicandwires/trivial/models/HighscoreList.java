@@ -8,8 +8,8 @@ import java.util.List;
 public class HighscoreList {
 
     public static class Score extends online.madeofmagicandwires.trivial.models.Score {
-        protected Score(int score, int position, String name) {
-            super(score, position, name);
+        public Score(int id, int score, String name) {
+            super(score, id, name);
         }
     }
 

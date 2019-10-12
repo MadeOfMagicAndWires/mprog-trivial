@@ -578,7 +578,7 @@ public class TriviaRequestHelper extends VolleyRequestsHelper {
     @Override
     public void onErrorResponse(VolleyError error) {
         error.printStackTrace();
-        VolleyLog.e("TriviaRequestHelper", error.getLocalizedMessage());
+        VolleyLog.e("%s", error.getLocalizedMessage());
         if(listener != null) {
             listener.OnErrorResponse(lastRequest, error.getLocalizedMessage());
         }

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item type="id" name="answer_holder_tag"/>
+    <item type="integer" name="default_highscores_api_port">8080</item>
 </resources>

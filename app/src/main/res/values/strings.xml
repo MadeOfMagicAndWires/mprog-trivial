@@ -10,4 +10,9 @@
     <string name="game_fragment_placeholder_text">Please wait&#8230;</string>
     <string name="no_prev_question_error_msg">You are at the start of the game!</string>
     <string name="no_next_question_error_msg">You have reached the last question!</string>
+    <string name="default_highscores_api_url">http://trivial.madeofmagicandwires.online</string>
+    <string name="highscores_api_settings_category">Highscore API Settings</string>
+    <string name="highscore_api_url_pref_key">highscore_api_url</string>
+    <string name="highscore_api_port_pref_key">highscore_api_port</string>
+    <string name="shared_preferences_file">Trivial.db</string>
 </resources>

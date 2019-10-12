@@ -160,7 +160,7 @@ public class HighscoreListTest {
         HighscoreList.Score newScore = testScores.getScore(4);
         assertNotNull("Score not set correctly", newScore);
         assertEquals("Last added score not saved correctly!",
-                newScore.getPosition(),
+                newScore.getId(),
                 testScores.getLastAddedIndex());
         assertEquals(
                 "last added score was not the same!",
